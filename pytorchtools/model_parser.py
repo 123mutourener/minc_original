@@ -42,7 +42,7 @@ class PrintNetList(argparse.Action):
         setattr(namespace, self.dest, True)
 
 
-def torchvision_model(name, pretrained=True, num_classes=-1, **kwargs):
+def torchvision_model(name, num_classes=-1, pretrained=True,  **kwargs):
     net_builder = getattr(models, name)
     if pretrained:
         net = net_builder(pretrained=pretrained, **kwargs)
@@ -54,8 +54,8 @@ def torchvision_model(name, pretrained=True, num_classes=-1, **kwargs):
     return net
 
 
-def get_model(model_name, pretrained=True, num_class=-1, **kwargs):
-    net = torchvision_model(model_name, pretrained, num_class, **kwargs)
+def get_model(model_name, num_class=-1, pretrained=True, **kwargs):
+    net = torchvision_model(model_name, num_class, pretrained, **kwargs)
 
     return net
 
