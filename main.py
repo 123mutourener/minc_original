@@ -1,11 +1,16 @@
 import argparse
-from model_parser import get_model, PrintNetList
+from pytorchtools.model_parser import get_model, PrintNetList
 import torch
 import visdom
 
+
+def main():
+    return
+
+
 if __name__ == '__main__':
 
-    vis = visdom.Visdom()
+    # vis = visdom.Visdom()
 
     parser = argparse.ArgumentParser(description='Train and test a network ' +
                                                  'on the MINC datasets, refer to section 4.1 and 4.2')
@@ -76,6 +81,9 @@ if __name__ == '__main__':
                             'decay (step, default: 5)')
 
     # Other Options
+    parser.add_argument('--stage', default='patch', choices=['patch', 'scene'],
+                        help='train the patch classification or ' +
+                        'full scene segmentation task (default: patch)')
     parser.add_argument('--resume', default='', type=str, metavar='JSON_FILE',
                         help='resume the training from the specified JSON ' +
                         'file  (default: none)')
@@ -84,7 +92,6 @@ if __name__ == '__main__':
     parser.add_argument('--net-list', action=PrintNetList,
                         help='Print the list of the available network ' +
                         'architectures')
-
     args = parser.parse_args()
 
     if not args.net_list:
