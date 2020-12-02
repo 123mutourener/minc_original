@@ -1,109 +1,133 @@
 import argparse
 import sys
 import platform
-from time import strftime
-
-from pytorchtools.model_parser import get_model, PrintNetList
 import ast
 import torch
 import visdom
+import torch.optim.lr_scheduler as lr_sched
+from pytorchtools.model_parser import get_model, PrintNetList
+from time import strftime
 
 
 def main(args):
+    # check what to train
+    # Todo: edit the code to load trained patch network if "scene" stage is received
+
+    # Start training from scratch
+    if not args.resume and not args.test:
+        # run the following functions in order!
+        json_data, net = prep_model(args)
+        optimizer = prep_optimizer(args, json_data, net)
+        scheduler = prep_scheduler(args, json_data, optimizer)
+
+        epochs = range(json_data["train_params"]["epochs"])
+
+    # Resume from a training checkpoint or test the network
+    else:
+        # Todo: implement load saved models
+        return
+
+
+def prep_model(args):
     # Model and data parameters
     model = args.model
     dataset = args.dataset
-    batch_size = args.batch_size
     classes = ast.literal_eval(args.classes)
     gpu = args.gpu
     seed = args.seed
+    stage = args.stage
 
+    print("Start to train the {} stage".format(stage))
+
+    # Load the network model
+    net = get_model(model, len(classes))
+    if net is None:
+        print("Unknown model name:", model + ".",
+              "Use '--net-list' option",
+              "to check the available network models")
+        sys.exit(2)
+    else:
+        print("Network {} loaded successfully".format(model))
+
+    if gpu > 0:
+        net.cuda()
+        print("GPU mode enabled with {} chips".format(gpu))
+    else:
+        print("CPU mode enabled")
+
+    # Initialize the random generator
+    torch.manual_seed(seed)
+    if gpu > 0:
+        torch.cuda.manual_seed_all(seed)
+
+    # Dictionary used to store the training results and metadata
+    json_data = {"platform": platform.platform(), "date": strftime("%Y-%m-%d_%H:%M:%S"), "impl": "pytorch",
+                 "dataset": dataset, "gpu": gpu, "model": model, "classes": classes, "seed": seed,
+                 "stage": stage,
+                 }
+
+    return json_data, net
+
+
+def prep_optimizer(args, json_data, net):
     # Training parameters
-    method = args.method
-    epochs = args.epochs
     momentum = args.momentum
     w_decay = args.w_decay
-
-    # Learning rate scheduler parameters
+    method = args.method
+    epochs = args.epochs
+    batch_size = args.batch_size
     l_rate = args.l_rate
-    scheduler = args.lrate_sched
+
+    json_data["train_params"] = {"method": method,
+                                 "epochs": epochs,
+                                 "batch_size": batch_size,
+                                 "last_epoch": 0,
+                                 "train_time": 0.0
+                                 }
+    # Optimization method
+    if method == "SGD":
+        optimizer = torch.optim.SGD(net.parameters(),
+                                    lr=l_rate,
+                                    momentum=momentum,
+                                    weight_decay=w_decay)
+    # Extract training parameters from the optimizer state
+    for t_param in optimizer.state_dict()["param_groups"][0]:
+        if t_param is not "params":
+            json_data["train_params"][t_param] = \
+                optimizer.state_dict()["param_groups"][0][t_param]
+
+    # get the number of trainable parameters
+    num_par = 0
+    for parameter in net.parameters():
+        num_par += parameter.numel()
+    json_data["num_params"] = num_par
+
+    return optimizer
+
+
+def prep_scheduler(args, json_data, optimizer):
+    # Learning rate scheduler parameters
     step_size = args.step_size
     milestones = ast.literal_eval(args.milestones)
     gamma = args.gamma
 
-    # check what to train
-    # Todo: edit the code to load trained patch network if "scene" stage is received
-    stage = args.stage
-    print("Start to train the {} stage".format(stage))
-
-    # Start training from scratch
-    if not args.resume and not args.test:
-        # Load the network model
-        net = get_model(model, len(classes))
-        if net is None:
-            print("Unknown model name:", model + ".",
-                  "Use '--net-list' option",
-                  "to check the available network models")
-            sys.exit(2)
-        else:
-            print("Network {} loaded successfully".format(model))
-
-        if gpu > 0:
-            net.cuda()
-            print("GPU mode enabled with {} chips".format(gpu))
-        else:
-            print("CPU mode enabled")
-
-        # Initialize the random generator
-        torch.manual_seed(seed)
-        if gpu > 0:
-            torch.cuda.manual_seed_all(seed)
-
-        # Dictionary used to store the training results and metadata
-        json_data = {"platform": platform.platform(), "date": strftime("%Y-%m-%d_%H:%M:%S"), "impl": "pytorch",
-                     "datasets": dataset, "gpu": gpu, "model": model, "epochs": epochs, "classes": classes,
-                     "stage": stage,
-                     "train_params": {"method": method,
-                                      "batch_size": batch_size,
-                                      "seed": seed,
-                                      "last_epoch": 0,
-                                      "train_time": 0.0}}
-        epochs = range(epochs)
-
-        # Optimization method
-        if method == "SGD":
-            optimizer = torch.optim.SGD(net.parameters(),
-                                        lr=l_rate,
-                                        momentum=momentum,
-                                        weight_decay=w_decay)
-
-        # Learning rate scheduler
-        lrate_dict = dict()
-        lrate_dict["sched"] = args.lrate_sched
-        if args.lrate_sched is not "constant":
-            if args.lrate_sched == "step":
-                lrate_dict["step_size"] = step_size
-                lrate_dict["gamma"] = gamma
-                scheduler = lr_sched.StepLR(optimizer, step_size, gamma)
-            elif args.lrate_sched == "multistep":
-                lrate_dict["milestones"] = milestones
-                lrate_dict["gamma"] = gamma
-                scheduler = lr_sched.MultiStepLR(optimizer, milestones, gamma)
-            elif args.lrate_sched == "exponential":
-                lrate_dict["gamma"] = gamma
-                scheduler = lr_sched.ExponentialLR(optimizer, gamma)
-        json_data["train_params"]["l_rate"] = lrate_dict
-
-        # Extract training parameters from the optimizer state
-        for t_param in optimizer.state_dict()["param_groups"][0]:
-            if t_param is not "params":
-                json_data["train_params"][t_param] = \
-                    optimizer.state_dict()["param_groups"][0][t_param]
-
-        num_par = 0
-        for parameter in net.parameters():
-            num_par += parameter.numel()
-        json_data["num_params"] = num_par
+    # Learning rate scheduler
+    lrate_dict = dict()
+    lrate_dict["sched"] = args.lrate_sched
+    if args.lrate_sched is not "constant":
+        if args.lrate_sched == "step":
+            lrate_dict["step_size"] = step_size
+            lrate_dict["gamma"] = gamma
+            scheduler = lr_sched.StepLR(optimizer, step_size, gamma)
+        elif args.lrate_sched == "multistep":
+            lrate_dict["milestones"] = milestones
+            lrate_dict["gamma"] = gamma
+            scheduler = lr_sched.MultiStepLR(optimizer, milestones, gamma)
+        elif args.lrate_sched == "exponential":
+            lrate_dict["gamma"] = gamma
+            scheduler = lr_sched.ExponentialLR(optimizer, gamma)
+    json_data["train_params"]["l_rate"] = lrate_dict
+    return scheduler
 
 
 def init_data_args(parser):
@@ -194,7 +218,6 @@ def init_control_args(parser):
     parser.add_argument('--net-list', action=PrintNetList,
                         help='Print the list of the available network ' +
                              'architectures')
-    args = parser.parse_args()
 
 
 if __name__ == '__main__':
@@ -209,5 +232,6 @@ if __name__ == '__main__':
     init_lrate_args(parser)
     init_control_args(parser)
 
+    args = parser.parse_args()
     if not args.net_list:
         main(args)
