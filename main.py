@@ -1,4 +1,6 @@
 import argparse
+import json
+import os
 import sys
 import platform
 import ast
@@ -11,22 +13,105 @@ from time import strftime
 
 def main(args):
     # check what to train
-    # Todo: edit the code to load trained patch network if "scene" stage is received
 
     # Start training from scratch
     if not args.resume and not args.test:
+        # Prepare to train the patch CNN.
         # run the following functions in order!
-        json_data, net = prep_model(args)
-        optimizer = prep_optimizer(args, json_data, net)
-        scheduler = prep_scheduler(args, json_data, optimizer)
+        if args.stage == "patch":
+            json_data, net = prep_model(args)
+            optimizer = prep_optimizer(args, json_data, net)
+            scheduler = prep_scheduler(args, json_data, optimizer)
 
-        epochs = range(json_data["train_params"]["epochs"])
+            epochs = range(json_data["train_params"]["epochs"])
+        else:
+            # Todo: edit the code to load trained patch network if "scene" stage is received
+            return
 
     # Resume from a training checkpoint or test the network
     else:
-        # Todo: implement load saved models
+        # Todo: implement load saved models, separate patch and scene.
+        # Resume from a training checkpoint or test the network
+        with open(args.resume or args.test, 'rb') as f:
+            json_data = json.load(f)
+        train_info = json_data["train_params"]
+        dataset = json_data["dataset"]
+        torch.manual_seed(json_data["seed"])
+        batch_size = train_info["batch_size"]
+
+        # Load the network model
+        classes = json_data["classes"]
+        net = get_model(json_data["model"], len(classes))
+
+        # always check gpu number rather than trust history
+        if args.gpu > 0:
+            torch.cuda.manual_seed_all(train_info["seed"])
+            net.cuda()
+        else:
+            torch.manual_seed(train_info["seed"])
+
+        if args.resume:
+            # Resume training
+            # Load the saved state
+            # (in the same directory as the json file)
+            last_epoch = train_info["last_epoch"]
+            epochs = range(last_epoch, train_info["epochs"])
+            chk_dir = os.path.split(args.resume)[0]
+            state = torch.load(os.path.join(chk_dir, json_data["state"]))
+
+            # Load the network parameters
+            net.load_state_dict(state["params"])
+
+            # load optimizer
+            optimizer = load_optimizer(train_info, net, state)
+
+            # Load the learning rate scheduler info
+            scheduler = load_scheduler(train_info, optimizer, last_epoch)
+
+        else:
+            # Test the network
+            # Load the saved parameters
+            # (in the same directory as the json file)
+            res_dir = os.path.split(args.test)[0]
+            if "params" in json_data:
+                net.load_state_dict(torch.load(os.path.join(res_dir,
+                                                            json_data["params"]
+                                                            )))
+            elif "state" in json_data:
+                # Test a checkpointed network
+                state = torch.load(os.path.join(res_dir, json_data["state"]))
+                net.load_state_dict(state["params"])
+            else:
+                sys.exit("No network parameters found in JSON file")
         return
 
+
+def load_scheduler(train_info, optimizer, last_epoch):
+    if train_info["l_rate"]["sched"] == "step":
+        step_size = train_info["l_rate"]["step_size"]
+        gamma = train_info["l_rate"]["gamma"]
+        scheduler = lr_sched.StepLR(optimizer, step_size, gamma,
+                                    last_epoch)
+    elif train_info["l_rate"]["sched"] == "multistep":
+        milestones = train_info["l_rate"]["milestones"]
+        gamma = train_info["l_rate"]["gamma"]
+        scheduler = lr_sched.MultiStepLR(optimizer, milestones, gamma,
+                                         last_epoch)
+    elif args.lrate_sched == "exponential":
+        gamma = train_info["l_rate"]["gamma"]
+        scheduler = lr_sched.ExponentialLR(optimizer, gamma,
+                                           last_epoch)
+    return scheduler
+
+
+def load_optimizer(train_info, net, state):
+    # Load the optimizer state
+    method = train_info["method"]
+    if method == "SGD":
+        optimizer = torch.optim.SGD(net.parameters(),
+                                    lr=train_info["initial_lr"])
+        optimizer.load_state_dict(state["optim"])
+    return optimizer
 
 def prep_model(args):
     # Model and data parameters
@@ -49,16 +134,14 @@ def prep_model(args):
     else:
         print("Network {} loaded successfully".format(model))
 
+    # Initialize the random generator
     if gpu > 0:
         net.cuda()
         print("GPU mode enabled with {} chips".format(gpu))
-    else:
-        print("CPU mode enabled")
-
-    # Initialize the random generator
-    torch.manual_seed(seed)
-    if gpu > 0:
         torch.cuda.manual_seed_all(seed)
+    else:
+        torch.manual_seed(seed)
+        print("CPU mode enabled")
 
     # Dictionary used to store the training results and metadata
     json_data = {"platform": platform.platform(), "date": strftime("%Y-%m-%d_%H:%M:%S"), "impl": "pytorch",
