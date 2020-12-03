@@ -23,11 +23,10 @@ def main(args):
         # run the following functions in order!
         # if args.stage == "patch":
         json_data, net = prep_model(args)
-        train_info = json_data["train_params"]
         optimizer = prep_optimizer(args, json_data, net)
         scheduler = prep_scheduler(args, json_data, optimizer)
+        train_info = json_data["train_params"]
         # Todo: edit the code to load trained patch network if "scene" stage is received
-        return
 
     # Resume from a training checkpoint or test the network
     else:
@@ -95,10 +94,10 @@ def main(args):
         control_train(json_data, net, epochs, scheduler, criterion, optimizer, train_loader, val_loader)
 
     # test the model
-    print("Testing network...")
-    test(net, test_loader, args, json_data)
-    # Save the trained network parameters and the testing results
-    save_params(net, json_data, args.save_dir)
+    # print("Testing network...")
+    # test(net, test_loader, args, json_data)
+    # # Save the trained network parameters and the testing results
+    # save_params(net, json_data, args.save_dir)
 
 def control_train(json_data, net, epochs, scheduler, criterion, optimizer, train_loader, val_loader):
     # Training loop
@@ -109,16 +108,16 @@ def control_train(json_data, net, epochs, scheduler, criterion, optimizer, train
         # Train the Model
         scheduler.step()
         train(net, train_loader, criterion, optimizer, epoch, epochs,
-              loss_window)
+              )
 
         # Check accuracy on validation set
         print("Validating network...")
-        validate(net, val_loader, epoch, json_data["classes"], val_windows)
+        # validate(net, val_loader, epoch, json_data["classes"], val_windows)
         json_data["train_params"]["train_time"] += round(time() -
                                                          start_epoch, 3)
 
         # Save the checkpoint state
-        save_state(net, optimizer, json_data, epoch + 1, args.chk_dir)
+        # save_state(net, optimizer, json_data, epoch + 1, args.chk_dir)
 
 
 def train(net, train_loader, criterion, optimizer, epoch, epochs,
@@ -144,8 +143,8 @@ def train(net, train_loader, criterion, optimizer, epoch, epochs,
         start_batch = time()
 
         if args.gpu > 0:
-            images = Variable(images.cuda(async = True))
-            labels = Variable(labels.cuda(async = True))
+            images = Variable(images.cuda(non_blocking = True))
+            labels = Variable(labels.cuda(non_blocking = True))
         else:
             images = Variable(images)
             labels = Variable(labels)
@@ -365,13 +364,13 @@ def prep_scheduler(args, json_data, optimizer):
 def init_data_args(parser):
     # Data Options
     data_args = parser.add_argument_group('Data arguments')
-    data_args.add_argument('--dataset', metavar='NAME', default='minc2500',
+    data_args.add_argument('--dataset', metavar='NAME', default='minc',
                            choices=['minc2500', 'minc'],
                            help='name of the datasets to be used' +
                                 ' (default: minc2500)')
     data_args.add_argument('--data-root', metavar='DIR', help='path to ' +
                                                               'datasets (default: ./$(DATASET)_root)',
-                           default='../data/material/MINC/original-paper')
+                           default='../data/material/MINC/original-paper/')
     data_args.add_argument('--save-dir', metavar='DIR', default='./results',
                            help='path to trained models (default: results/)')
     data_args.add_argument('--chk-dir', metavar='DIR', default='./checkpoints',

@@ -8,7 +8,7 @@ from torchvision import transforms
 class MINC(Dataset):
     def __init__(self, root_dir, set_type='train', classes=range(23),
                  scale=0.233, transform=None):
-        self.root_dir = root_dir
+        self.root_dir = root_dir + "minc"
         self.set_type = set_type
         self.transform = transform
         self.scale = scale
@@ -23,7 +23,7 @@ class MINC(Dataset):
         self.last_img["img_path"] = ''
 
         # Get the material categories from the categories.txt file
-        file_name = os.path.join(root_dir, 'categories.txt')
+        file_name = os.path.join(self.root_dir, 'categories.txt')
         self.categories = dict()
         new_class_id = 0
         with open(file_name, 'r') as f:
