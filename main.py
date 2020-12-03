@@ -6,27 +6,28 @@ import platform
 import ast
 import torch
 import visdom
+from torch.autograd import Variable
 import torch.optim.lr_scheduler as lr_sched
+from torch import nn
+from torch.utils.data import DataLoader
+from torchvision import transforms
+from minctools.datasets.minc import MINC
 from pytorchtools.model_parser import get_model, PrintNetList
-from time import strftime
+from time import strftime, time
 
 
 def main(args):
-    # check what to train
-
     # Start training from scratch
     if not args.resume and not args.test:
         # Prepare to train the patch CNN.
         # run the following functions in order!
-        if args.stage == "patch":
-            json_data, net = prep_model(args)
-            optimizer = prep_optimizer(args, json_data, net)
-            scheduler = prep_scheduler(args, json_data, optimizer)
-
-            epochs = range(json_data["train_params"]["epochs"])
-        else:
-            # Todo: edit the code to load trained patch network if "scene" stage is received
-            return
+        # if args.stage == "patch":
+        json_data, net = prep_model(args)
+        train_info = json_data["train_params"]
+        optimizer = prep_optimizer(args, json_data, net)
+        scheduler = prep_scheduler(args, json_data, optimizer)
+        # Todo: edit the code to load trained patch network if "scene" stage is received
+        return
 
     # Resume from a training checkpoint or test the network
     else:
@@ -35,13 +36,10 @@ def main(args):
         with open(args.resume or args.test, 'rb') as f:
             json_data = json.load(f)
         train_info = json_data["train_params"]
-        dataset = json_data["dataset"]
         torch.manual_seed(json_data["seed"])
-        batch_size = train_info["batch_size"]
 
         # Load the network model
-        classes = json_data["classes"]
-        net = get_model(json_data["model"], len(classes))
+        net = get_model(json_data["model"], len(json_data["classes"]))
 
         # always check gpu number rather than trust history
         if args.gpu > 0:
@@ -54,8 +52,6 @@ def main(args):
             # Resume training
             # Load the saved state
             # (in the same directory as the json file)
-            last_epoch = train_info["last_epoch"]
-            epochs = range(last_epoch, train_info["epochs"])
             chk_dir = os.path.split(args.resume)[0]
             state = torch.load(os.path.join(chk_dir, json_data["state"]))
 
@@ -66,7 +62,7 @@ def main(args):
             optimizer = load_optimizer(train_info, net, state)
 
             # Load the learning rate scheduler info
-            scheduler = load_scheduler(train_info, optimizer, last_epoch)
+            scheduler = load_scheduler(train_info, optimizer, train_info["last_epoch"])
 
         else:
             # Test the network
@@ -83,7 +79,159 @@ def main(args):
                 net.load_state_dict(state["params"])
             else:
                 sys.exit("No network parameters found in JSON file")
-        return
+
+    # Prepare the dataset
+    train_loader, val_loader = prep_dataset(json_data["dataset"], json_data["classes"], train_info["batch_size"],
+                                            test=False)
+    test_loader = prep_dataset(json_data["dataset"], json_data["classes"], train_info["batch_size"],
+                               test=True)
+    if not args.test:
+        epochs = range(train_info["last_epoch"], train_info["epochs"])
+        if args.gpu > 0:
+            criterion = nn.CrossEntropyLoss().cuda()
+        else:
+            criterion = nn.CrossEntropyLoss()
+        # Train the network
+        control_train(json_data, net, epochs, scheduler, criterion, optimizer, train_loader, val_loader)
+
+    # test the model
+    print("Testing network...")
+    test(net, test_loader, args, json_data)
+    # Save the trained network parameters and the testing results
+    save_params(net, json_data, args.save_dir)
+
+def control_train(json_data, net, epochs, scheduler, criterion, optimizer, train_loader, val_loader):
+    # Training loop
+    print("Training network started!")
+    for epoch in epochs:
+        start_epoch = time()
+
+        # Train the Model
+        scheduler.step()
+        train(net, train_loader, criterion, optimizer, epoch, epochs,
+              loss_window)
+
+        # Check accuracy on validation set
+        print("Validating network...")
+        validate(net, val_loader, epoch, json_data["classes"], val_windows)
+        json_data["train_params"]["train_time"] += round(time() -
+                                                         start_epoch, 3)
+
+        # Save the checkpoint state
+        save_state(net, optimizer, json_data, epoch + 1, args.chk_dir)
+
+
+def train(net, train_loader, criterion, optimizer, epoch, epochs,
+              loss_window):
+    """ Train the network on the whole training set
+
+    Parameters:
+    net -- Module object containing the network model;
+    train_loader -- DataLoader object for the datasets in use;
+    criterion -- Method used to compute the loss;
+    optimizer -- Method used to update the network paramets;
+    epoch -- actual training epoch;
+    epochs -- total training epochs;
+    loss_window -- visdom window used to plot the loss;
+    """
+
+    print_interval = 50
+    batch_time = 0.0
+    # Switch to train mode
+    net.train()
+
+    for i, (images, labels) in enumerate(train_loader):
+        start_batch = time()
+
+        if args.gpu > 0:
+            images = Variable(images.cuda(async = True))
+            labels = Variable(labels.cuda(async = True))
+        else:
+            images = Variable(images)
+            labels = Variable(labels)
+
+        # Forward + Backward + Optimize
+        optimizer.zero_grad()
+        outputs = net(images)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        batch_time += time() - start_batch
+        if i % print_interval == 0:
+            # vis.line(
+            #     X=torch.ones((1, 1)).cpu() * ((epoch) * len(train_loader) + i),
+            #     Y=torch.Tensor([loss.data[0]]).unsqueeze(0).cpu(),
+            #     win=loss_window,
+            #     update='append')
+            print('Epoch [%d/%d], Iter [%d/%d] Loss: %.4f Time: %.3f s/batch'
+                  % (epoch + 1, epochs[-1] + 1, i, len(train_loader),
+                     loss.data[0], batch_time / (i + 1)))
+
+
+def prep_dataset(dataset, classes, batch_size, test):
+    if args.data_root:
+        data_root = args.data_root
+    else:
+        # Default directory
+        data_root = os.path.join(os.curdir, dataset + "_root")
+
+    # Prepare data structures
+    if not test:
+        # Training phase
+        train_trans = transforms.Compose([
+            transforms.RandomSizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor()
+        ])
+        val_trans = transforms.Compose([
+            transforms.Scale(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor()
+        ])
+
+        # if dataset == "minc2500":
+        #     train_set = MINC2500(root_dir=data_root, set_type='train',
+        #                          split=1, transform=train_trans)
+        #     val_set = MINC2500(root_dir=data_root, set_type='validate',
+        #                        split=1, transform=val_trans)
+        if dataset == "minc":
+            train_set = MINC(root_dir=data_root, set_type='train',
+                             classes=classes, transform=train_trans)
+            print("Training set loaded, with {} samples".format(len(train_set)))
+
+            val_set = MINC(root_dir=data_root, set_type='validate',
+                           classes=classes, transform=val_trans)
+            print("Validation set loaded, with {} samples".format(len(val_set)))
+
+        train_loader = DataLoader(dataset=train_set,
+                                  batch_size=batch_size,
+                                  shuffle=True, num_workers=args.workers,
+                                  pin_memory=(args.gpu > 0))
+        val_loader = DataLoader(dataset=val_set,
+                                batch_size=batch_size,
+                                shuffle=False, num_workers=args.workers,
+                                pin_memory=(args.gpu > 0))
+
+        return train_loader, val_loader
+
+    else:
+        # Testing phase
+        test_trans = transforms.Compose([
+            transforms.Scale(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor()
+        ])
+        # if dataset == "minc2500":
+        #     test_set = MINC2500(root_dir=data_root, set_type='test', split=1,
+        #                         transform=test_trans)
+        if dataset == "minc":
+            test_set = MINC(root_dir=data_root, set_type='test',
+                            classes=classes, transform=test_trans)
+        test_loader = DataLoader(dataset=test_set, batch_size=batch_size,
+                                 shuffle=False, num_workers=args.workers,
+                                 pin_memory=(args.gpu > 0))
+        return test_loader
 
 
 def load_scheduler(train_info, optimizer, last_epoch):
@@ -112,6 +260,7 @@ def load_optimizer(train_info, net, state):
                                     lr=train_info["initial_lr"])
         optimizer.load_state_dict(state["optim"])
     return optimizer
+
 
 def prep_model(args):
     # Model and data parameters
