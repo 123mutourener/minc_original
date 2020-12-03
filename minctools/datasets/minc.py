@@ -48,7 +48,7 @@ class MINC(Dataset):
             raise RuntimeError("invalid data category")
 
         for i in set_num:
-            file_name = os.path.join(root_dir, set_types[i] + '.txt')
+            file_name = os.path.join(self.root_dir, set_types[i] + '.txt')
             with open(file_name, 'r') as f:
                 for line in f:
                     # Each row in self.data is composed by:
@@ -97,7 +97,6 @@ class MINC(Dataset):
 
         # subtract the mean for each channel
         patch = transforms.Compose([
-            transforms.ToTensor(),
             transforms.Normalize(self.mean, self.std)
         ])(patch)
 

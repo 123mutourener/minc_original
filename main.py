@@ -106,9 +106,8 @@ def control_train(json_data, net, epochs, scheduler, criterion, optimizer, train
         start_epoch = time()
 
         # Train the Model
+        train(net, train_loader, criterion, optimizer, epoch, epochs, None)
         scheduler.step()
-        train(net, train_loader, criterion, optimizer, epoch, epochs,
-              )
 
         # Check accuracy on validation set
         print("Validating network...")
@@ -179,12 +178,12 @@ def prep_dataset(dataset, classes, batch_size, test):
     if not test:
         # Training phase
         train_trans = transforms.Compose([
-            transforms.RandomSizedCrop(224),
+            transforms.RandomResizedCrop(224),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor()
         ])
         val_trans = transforms.Compose([
-            transforms.Scale(256),
+            transforms.Resize(256),
             transforms.CenterCrop(224),
             transforms.ToTensor()
         ])
@@ -217,7 +216,7 @@ def prep_dataset(dataset, classes, batch_size, test):
     else:
         # Testing phase
         test_trans = transforms.Compose([
-            transforms.Scale(256),
+            transforms.Resize(256),
             transforms.CenterCrop(224),
             transforms.ToTensor()
         ])
@@ -363,6 +362,7 @@ def prep_scheduler(args, json_data, optimizer):
 
 def init_data_args(parser):
     # Data Options
+    # print(os.listdir("../../data/material/MINC/original-paper"))
     data_args = parser.add_argument_group('Data arguments')
     data_args.add_argument('--dataset', metavar='NAME', default='minc',
                            choices=['minc2500', 'minc'],
@@ -370,13 +370,13 @@ def init_data_args(parser):
                                 ' (default: minc2500)')
     data_args.add_argument('--data-root', metavar='DIR', help='path to ' +
                                                               'datasets (default: ./$(DATASET)_root)',
-                           default='../data/material/MINC/original-paper/')
+                           default='../../data/material/MINC/original-paper/')
     data_args.add_argument('--save-dir', metavar='DIR', default='./results',
                            help='path to trained models (default: results/)')
     data_args.add_argument('--chk-dir', metavar='DIR', default='./checkpoints',
                            help='path to checkpoints (default: checkpoints/)')
     data_args.add_argument('--workers', metavar='NUM', type=int,
-                           default=8, help='number of worker threads for' +
+                           default=0, help='number of worker threads for' +
                                            ' the data loader')
 
 
@@ -454,7 +454,6 @@ def init_control_args(parser):
 if __name__ == '__main__':
 
     # vis = visdom.Visdom()
-
     parser = argparse.ArgumentParser(description='Train and test a network ' +
                                                  'on the MINC datasets, refer to section 4.1 and 4.2')
     init_data_args(parser)
