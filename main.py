@@ -164,7 +164,7 @@ def train(net, train_loader, criterion, optimizer, epoch, epochs,
             #     update='append')
             print('Epoch [%d/%d], Iter [%d/%d] Loss: %.4f Time: %.3f s/batch'
                   % (epoch + 1, epochs[-1] + 1, i, len(train_loader),
-                     loss.data[0], batch_time / (i + 1)))
+                     loss.item(), batch_time / (i + 1)))
 
 
 def prep_dataset(dataset, classes, batch_size, test):
