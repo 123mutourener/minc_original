@@ -13,6 +13,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from minctools.datasets.minc import MINC
+from pytorchtools.progressbar import progress_bar
 from pytorchtools.model_parser import get_model, PrintNetList
 from time import strftime, time
 
@@ -141,6 +142,7 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
 
             running_loss = 0.0
             running_corrects = 0
+            sample_counter = 0
 
             for i, (images, labels) in enumerate(dataloaders[phase]):
                 start_batch = time()
@@ -167,24 +169,23 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
                 # statistics
                 running_loss += loss.item() * images.size(0)
                 running_corrects += torch.sum(preds == labels.data)
+                sample_counter += images.size(0)
+
+                epoch_loss = running_loss / sample_counter
+                epoch_acc = running_corrects.double() / sample_counter
 
                 batch_time += time() - start_batch
-
-                if (i+1) % 10 == 0:
-                    size = (i+1)*images.size(0)
-                    print("Training {} samples, with loss: {:.4f}, acc: {:.4f}".format(size, running_loss/size, running_corrects/size))
+                progress_bar(i, len(dataloaders[phase]),
+                             "Epoch [{}/{}], {} Loss: {:.4f} Acc: {:.4f}".format(epoch + 1,
+                                                                                 epochs[-1] + 1,
+                                                                                 "Train" if phase == "train" \
+                                                                                 else "Validation",
+                                                                                 epoch_loss,
+                                                                                 epoch_acc))
 
             if phase == "train":
                 scheduler.step()
 
-            # print statistics after each batch
-            epoch_loss = running_loss / len(dataloaders[[phase]])
-            epoch_acc = running_corrects.double() / len(dataloaders[[phase]])
-
-            print("Epoch [{}/{}], {} Loss: {:.4f} Acc: {:.4f} Time Cost: {:.4f}".format(epoch + 1, epochs[-1] + 1,
-                                                                                        "Train" if phase == "train" else "Validation",
-                                                                                        epoch_loss, epoch_acc,
-                                                                                        batch_time))
             if phase == "val" and epoch_acc > best_acc:
                 best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(net.state_dict())
