@@ -1,4 +1,5 @@
 import argparse
+import copy
 import json
 import os
 import sys
@@ -91,7 +92,7 @@ def main(args):
         else:
             criterion = nn.CrossEntropyLoss()
         # Train the network
-        control_train(json_data, net, epochs, scheduler, criterion, optimizer, train_loader, val_loader)
+        train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_loader, val_loader)
 
     # test the model
     # print("Testing network...")
@@ -99,28 +100,8 @@ def main(args):
     # # Save the trained network parameters and the testing results
     # save_params(net, json_data, args.save_dir)
 
-def control_train(json_data, net, epochs, scheduler, criterion, optimizer, train_loader, val_loader):
-    # Training loop
-    print("Training network started!")
-    for epoch in epochs:
-        start_epoch = time()
 
-        # Train the Model
-        train(net, train_loader, criterion, optimizer, epoch, epochs, None)
-        scheduler.step()
-
-        # Check accuracy on validation set
-        print("Validating network...")
-        # validate(net, val_loader, epoch, json_data["classes"], val_windows)
-        json_data["train_params"]["train_time"] += round(time() -
-                                                         start_epoch, 3)
-
-        # Save the checkpoint state
-        # save_state(net, optimizer, json_data, epoch + 1, args.chk_dir)
-
-
-def train(net, train_loader, criterion, optimizer, epoch, epochs,
-              loss_window):
+def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_loader, val_loader):
     """ Train the network on the whole training set
 
     Parameters:
@@ -132,39 +113,96 @@ def train(net, train_loader, criterion, optimizer, epoch, epochs,
     epochs -- total training epochs;
     loss_window -- visdom window used to plot the loss;
     """
+    # Training loop
+    print("Training network started!")
+    dataloaders = dict()
+    dataloaders["train"] = train_loader
+    dataloaders["val"] = val_loader
 
-    print_interval = 50
-    batch_time = 0.0
-    # Switch to train mode
-    net.train()
+    # track the best model
+    best_model_wts = copy.deepcopy(net.state_dict())
+    best_acc = 0.0
+    best_loss = -1
+    print('-' * 10)
 
-    for i, (images, labels) in enumerate(train_loader):
-        start_batch = time()
+    for epoch in epochs:
+        # calculate the per batch time cost
+        start_epoch = time()
 
-        if args.gpu > 0:
-            images = Variable(images.cuda(non_blocking = True))
-            labels = Variable(labels.cuda(non_blocking = True))
-        else:
-            images = Variable(images)
-            labels = Variable(labels)
+        # Train the Model
+        for phase in ["train", "val"]:
+            batch_time = 0.0
+            if phase == "train":
+                # print_interval = 50
+                # Switch to train mode
+                net.train()
+            else:
+                net.eval()
 
-        # Forward + Backward + Optimize
-        optimizer.zero_grad()
-        outputs = net(images)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
+            running_loss = 0.0
+            running_corrects = 0
 
-        batch_time += time() - start_batch
-        if i % print_interval == 0:
-            # vis.line(
-            #     X=torch.ones((1, 1)).cpu() * ((epoch) * len(train_loader) + i),
-            #     Y=torch.Tensor([loss.data[0]]).unsqueeze(0).cpu(),
-            #     win=loss_window,
-            #     update='append')
-            print('Epoch [%d/%d], Iter [%d/%d] Loss: %.4f Time: %.3f s/batch'
-                  % (epoch + 1, epochs[-1] + 1, i, len(train_loader),
-                     loss.item(), batch_time / (i + 1)))
+            for i, (images, labels) in enumerate(dataloaders[phase]):
+                start_batch = time()
+
+                if args.gpu > 0:
+                    images = Variable(images.cuda(non_blocking=True))
+                    labels = Variable(labels.cuda(non_blocking=True))
+                else:
+                    images = Variable(images)
+                    labels = Variable(labels)
+
+                # Forward + Backward + Optimize
+                optimizer.zero_grad()
+                with torch.set_grad_enabled(phase == "train"):
+                    outputs = net(images)
+                    loss = criterion(outputs, labels)
+                    _, preds = torch.max(outputs, 1)
+
+                    # backward + optimize only if in training phase
+                    if phase == "train":
+                        loss.backward()
+                        optimizer.step()
+
+                # statistics
+                running_loss += loss.item() * images.size(0)
+                running_corrects += torch.sum(preds == labels.data)
+
+                batch_time += time() - start_batch
+
+                if (i+1) % 10 == 0:
+                    size = (i+1)*images.size(0)
+                    print("Training {} samples, with loss: {:.4f}, acc: {:.4f}".format(size, running_loss/size, running_corrects/size))
+
+            if phase == "train":
+                scheduler.step()
+
+            # print statistics after each batch
+            epoch_loss = running_loss / len(dataloaders[[phase]])
+            epoch_acc = running_corrects.double() / len(dataloaders[[phase]])
+
+            print("Epoch [{}/{}], {} Loss: {:.4f} Acc: {:.4f} Time Cost: {:.4f}".format(epoch + 1, epochs[-1] + 1,
+                                                                                        "Train" if phase == "train" else "Validation",
+                                                                                        epoch_loss, epoch_acc,
+                                                                                        batch_time))
+            if phase == "val" and epoch_acc > best_acc:
+                best_acc = epoch_acc
+                best_model_wts = copy.deepcopy(net.state_dict())
+
+        print()
+
+        json_data["train_params"]["train_time"] += round(time() - start_epoch, 3)
+
+    time_elapsed = json_data["train_params"]["train_time"]
+    print('Training complete in {:.0f}h {:.0f}m {:.0f}s'.format(time_elapsed // 3600,
+                                                                (time_elapsed % 3600) // 60,
+                                                                time_elapsed % 60))
+    print('Best val Acc: {:4f}'.format(best_acc))
+
+    # load best model weights
+    net.load_state_dict(best_model_wts)
+    # Save the checkpoint state
+    # save_state(net, optimizer, json_data, epoch + 1, args.chk_dir)
 
 
 def prep_dataset(dataset, classes, batch_size, test):
