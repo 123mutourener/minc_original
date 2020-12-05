@@ -17,6 +17,11 @@ export DATA_HOME=/scratch/${STUDENT_ID}
 
 export DATA_PATH=${DATA_HOME}/data/material/MINC
 
+module load conda/py3-latest
+
 conda activate cv-pytorch
+#source /local/software/conda/miniconda-py3-new/bin/activate cv-pytorch
+
+cd ..
 
 python main.py --data-dir "${DATA_PATH}" --stage patch
