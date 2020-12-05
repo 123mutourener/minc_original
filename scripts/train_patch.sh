@@ -2,7 +2,7 @@
 
 #SBATCH --gres=gpu:2
 #SBATCH --partition=gpu
-#SBATCH --nodes=2
+#SBATCH --nodes=1
 #SBATCH --time=01:00:00
 #SBATCH --no-requeue
 #SBATCH --exclusive
