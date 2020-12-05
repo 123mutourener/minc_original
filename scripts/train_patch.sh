@@ -25,4 +25,4 @@ conda activate cv-pytorch
 
 cd ..
 
-python main.py --data-dir "${DATA_PATH}" --stage patch
+python main.py --data-root "${DATA_PATH}" --stage patch
