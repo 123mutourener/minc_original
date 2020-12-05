@@ -17,6 +17,8 @@ export DATA_HOME=/scratch/${STUDENT_ID}
 
 export DATA_PATH=${DATA_HOME}/data/material/MINC
 
+conda init
+
 source /local/software/conda/miniconda-py3-new/bin/activate cv-pytorch
 
 conda activate cv-pytorch
