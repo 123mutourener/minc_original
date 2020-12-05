@@ -13,10 +13,10 @@
 #SBATCH --mail-user=yh1n19@soton.ac.uk
 export STUDENT_ID=$(whoami)
 
-export DATA_HOME=/scratch/$(STUDENT_ID)
+export DATA_HOME=/scratch/${STUDENT_ID}
 
-export DATA_PATH=$(DATA_HOME)/data/material/MINC
+export DATA_PATH=${DATA_HOME}/data/material/MINC
 
 conda activate cv-pytorch
 
-python main.py --data-dir $(DATA_PATH) --stage patch
+python main.py --data-dir "${DATA_PATH}" --stage patch
