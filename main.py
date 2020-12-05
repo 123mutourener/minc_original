@@ -6,7 +6,7 @@ import sys
 import platform
 import ast
 import torch
-import visdom
+# import visdom
 from torch.autograd import Variable
 import torch.optim.lr_scheduler as lr_sched
 from torch import nn
@@ -361,7 +361,7 @@ def prep_optimizer(args, json_data, net):
                                     weight_decay=w_decay)
     # Extract training parameters from the optimizer state
     for t_param in optimizer.state_dict()["param_groups"][0]:
-        if t_param is not "params":
+        if t_param != "params":
             json_data["train_params"][t_param] = \
                 optimizer.state_dict()["param_groups"][0][t_param]
 
@@ -383,7 +383,7 @@ def prep_scheduler(args, json_data, optimizer):
     # Learning rate scheduler
     lrate_dict = dict()
     lrate_dict["sched"] = args.lrate_sched
-    if args.lrate_sched is not "constant":
+    if args.lrate_sched != "constant":
         if args.lrate_sched == "step":
             lrate_dict["step_size"] = step_size
             lrate_dict["gamma"] = gamma
