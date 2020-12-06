@@ -15,7 +15,7 @@ export STUDENT_ID=$(whoami)
 
 export DATA_HOME=/scratch/${STUDENT_ID}
 
-export DATA_PATH=${DATA_HOME}/data/material/MINC
+export DATA_PATH=${DATA_HOME}/data/material/minc
 
 conda init
 
