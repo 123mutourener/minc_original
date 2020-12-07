@@ -1,4 +1,8 @@
 import argparse
+import ast
+import sys
+
+import torch
 from torchvision import models
 
 
@@ -42,30 +46,63 @@ class PrintNetList(argparse.Action):
         setattr(namespace, self.dest, True)
 
 
-def torchvision_model(name, num_classes=-1, pretrained=True,  **kwargs):
-    net_builder = getattr(models, name)
-    if pretrained:
-        net = net_builder(pretrained=pretrained, **kwargs)
-    elif num_classes > 0:
-        net = net_builder(pretrained=pretrained, num_classes=num_classes, **kwargs)
-    else:
-        net = net_builder(pretrained=pretrained, **kwargs)
+class ModelParser():
+    def __init__(self, args):
+        self._args = args
 
-    return net
+    def torchvision_model(self, name, num_classes=-1, pretrained=True, **kwargs):
+        net_builder = getattr(models, name)
+        if pretrained:
+            net = net_builder(pretrained=pretrained, **kwargs)
+        elif num_classes > 0:
+            net = net_builder(pretrained=pretrained, num_classes=num_classes, **kwargs)
+        else:
+            net = net_builder(pretrained=pretrained, **kwargs)
 
+        return net
 
-def get_model(model_name, num_class=-1, pretrained=True, **kwargs):
-    net = torchvision_model(model_name, num_class, pretrained, **kwargs)
+    def get_model(self, model_name, num_class=-1, pretrained=True, **kwargs):
+        net = self.torchvision_model(model_name, num_class, pretrained, **kwargs)
 
-    return net
+        return net
+
+    def prep_model(self):
+        # Model and data parameters
+        model = self._args.model
+        classes = ast.literal_eval(self._args.classes)
+        gpu = self._args.gpu
+        seed = self._args.seed
+        stage = self._args.stage
+
+        print("Start to train the {} stage".format(stage))
+
+        # Load the network model
+        net = self.get_model(model, len(classes))
+        if net is None:
+            print("Unknown model name:", model + ".",
+                  "Use '--net-list' option",
+                  "to check the available network models")
+            sys.exit(2)
+        else:
+            print("Network {} loaded successfully".format(model))
+
+        # Initialize the random generator
+        if gpu > 0:
+            net.cuda()
+            print("GPU mode enabled with {} chips".format(gpu))
+            torch.cuda.manual_seed_all(seed)
+        else:
+            torch.manual_seed(seed)
+            print("CPU mode enabled")
+
+        return net
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description='Model parsing module')
 
     parser.add_argument('--net-list', nargs=0, action=PrintNetList,
                         help='Print the list of the available network' +
-                        'architectures')
+                             'architectures')
 
     args = parser.parse_args()
