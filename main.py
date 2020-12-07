@@ -179,7 +179,7 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
                              "Epoch [{}/{}], {} Loss: {:.4f} Acc: {:.4f}".format(epoch + 1,
                                                                                  epochs[-1] + 1,
                                                                                  "Train" if phase == "train" \
-                                                                                 else "Validation",
+                                                                                     else "Validation",
                                                                                  epoch_loss,
                                                                                  epoch_acc))
 
@@ -397,9 +397,6 @@ def prep_scheduler(args, json_data, optimizer):
             scheduler = lr_sched.ExponentialLR(optimizer, gamma)
     json_data["train_params"]["l_rate"] = lrate_dict
     return scheduler
-
-
-
 
 
 if __name__ == '__main__':
