@@ -89,6 +89,7 @@ class ModelParser():
         # Initialize the random generator
         if gpu > 0:
             net.cuda()
+            net = torch.nn.DataParallel(net)
             print("GPU mode enabled with {} chips".format(gpu))
             torch.cuda.manual_seed_all(seed)
         else:
