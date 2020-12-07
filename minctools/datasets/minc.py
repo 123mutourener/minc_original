@@ -8,7 +8,7 @@ from torchvision import transforms
 class MINC(Dataset):
     def __init__(self, root_dir, set_type='train', classes=range(23),
                  scale=0.233, transform=None):
-        self.root_dir = root_dir + "minc"
+        self.root_dir = os.path.join(root_dir, "minc")
         self.set_type = set_type
         self.transform = transform
         self.scale = scale
