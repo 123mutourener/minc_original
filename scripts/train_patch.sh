@@ -25,4 +25,4 @@ conda activate cv-pytorch
 
 cd ..
 
-python main.py --data-root "${DATA_PATH}" --stage patch --batch-size 512
+python main.py --data-root "${DATA_PATH}" --stage patch --batch-size 128

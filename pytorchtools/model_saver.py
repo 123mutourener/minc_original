@@ -21,7 +21,7 @@ class ModelSaver():
         """
 
         json_data["train_params"]["last_epoch"] = epoch
-        epoch_str = '_epoch_' + str(epoch)
+        # epoch_str = '_epoch_' + str(epoch)
 
         if epoch == 1:
             # Generate the UUID (8 characters long)
