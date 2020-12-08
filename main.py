@@ -14,6 +14,7 @@ from pytorchtools.arg_parser import ArgParser
 from pytorchtools.lr_scheduler import LRScheduler
 from pytorchtools.json_formatter import JsonFormatter
 from pytorchtools.model_optimizer import ModelOptimizer
+from pytorchtools.model_saver import ModelSaver
 from time import time
 
 
@@ -124,14 +125,15 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
     loss_window -- visdom window used to plot the loss;
     """
     # Training loop
+    saver = ModelSaver(args)
     print("Training network started!")
     dataloaders = dict()
     dataloaders["train"] = train_loader
     dataloaders["val"] = val_loader
+    train_info = json_data["train_params"]
 
     # track the best model
-    best_model_wts = copy.deepcopy(net.state_dict())
-    best_acc = 0.0
+    best_acc = 0.0 if train_info["last_epoch"] == 0 else train_info["best_acc"]
     best_loss = -1
     print('-' * 10)
 
@@ -192,27 +194,25 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
                                                                                  epoch_loss,
                                                                                  epoch_acc))
 
+            # Save the checkpoint state
             if phase == "train":
                 scheduler.step()
 
-            if phase == "val" and epoch_acc > best_acc:
-                best_acc = epoch_acc
-                best_model_wts = copy.deepcopy(net.state_dict())
-
         print()
+        train_info["train_time"] += round(time() - start_epoch, 3)
 
-        json_data["train_params"]["train_time"] += round(time() - start_epoch, 3)
+        saver.save_state(net, optimizer, json_data, epoch + 1, which="latest")
+        if epoch_acc > best_acc:
+            best_acc = epoch_acc
+            train_info["best_acc"] = best_acc
+            train_info["best_epoch"] = epoch + 1
+            saver.save_state(net, optimizer, json_data, epoch + 1, which="best")
 
-    time_elapsed = json_data["train_params"]["train_time"]
+    time_elapsed = train_info["train_time"]
     print('Training complete in {:.0f}h {:.0f}m {:.0f}s'.format(time_elapsed // 3600,
                                                                 (time_elapsed % 3600) // 60,
                                                                 time_elapsed % 60))
     print('Best val Acc: {:4f}'.format(best_acc))
-
-    # load best model weights
-    net.load_state_dict(best_model_wts)
-    # Save the checkpoint state
-    # save_state(net, optimizer, json_data, epoch + 1, args.chk_dir)
 
 
 if __name__ == '__main__':
