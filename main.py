@@ -182,7 +182,7 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
                 sample_counter += images.size(0)
 
                 epoch_loss = running_loss / sample_counter
-                epoch_acc = running_corrects.double() / sample_counter
+                epoch_acc = running_corrects.double().item() / sample_counter
 
                 batch_time += time() - start_batch
                 progress_bar(i, len(dataloaders[phase]),

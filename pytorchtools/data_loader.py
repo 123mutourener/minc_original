@@ -67,7 +67,7 @@ class TorchDataLoader:
             self.train_loader = DataLoader(dataset=train_set,
                                            batch_size=self._batch_size, num_workers=self._args.workers,
                                            pin_memory=(self._args.gpu > 0), sampler=SubsetRandomSampler(
-                                            torch.randint(high=len(train_set), size=(120000,))))
+                                            torch.randint(high=len(train_set), size=(10,))))
             self.val_loader = DataLoader(dataset=val_set,
                                          batch_size=self._batch_size,
                                          shuffle=False, num_workers=self._args.workers,

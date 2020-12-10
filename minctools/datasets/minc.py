@@ -72,7 +72,7 @@ class MINC(Dataset):
 
     def __getitem__(self, idx):
         img_path = self.data[idx][1]
-
+        # print(idx)
         if self.last_img["img_path"] != img_path:
             # Sometimes the images are opened as grayscale,
             # so I need to force RGB

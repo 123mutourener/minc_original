@@ -32,8 +32,8 @@ class ModelSaver():
 
         f_name = os.path.join(self._save_dir, json_data["impl"] + "_" +
                               json_data["model"] + "_" +
-                              json_data["datasets"] + "_" +
-                              id + which)
+                              json_data["dataset"] + "_" +
+                              id + "_" + which)
         # Save training state
         state = dict()
         state["params"] = net.state_dict()
@@ -43,13 +43,12 @@ class ModelSaver():
         # Update train parameters from optimizer state
         for t_param in state["optim"]["param_groups"][0]:
             if t_param is not "params":
-                print(state["optim"])
                 json_data["train_params"][t_param] = \
                     state["optim"]["param_groups"][0][t_param]
 
         # Save experiment metadata
         json_data['state'] = os.path.split(f_name + '.state')[1]
-        with open(f_name + ".json", 'wb') as f:
+        with open(f_name + ".json", 'w') as f:
             json.dump(json_data, f)
 
     # def save_params(self, net, json_data, dir):
