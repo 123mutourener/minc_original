@@ -1,10 +1,10 @@
 import os
 
 import torch
-from torch.utils.data import DataLoader, SubsetRandomSampler
+from torch.utils.data import DataLoader
 from torchvision import transforms
 from minctools.datasets.minc import MINC
-
+from pytorchtools.sampler import PySubsetRandomSampler
 
 class TorchDataLoader:
     def __init__(self, args, json_data):
@@ -66,8 +66,8 @@ class TorchDataLoader:
 
             self.train_loader = DataLoader(dataset=train_set,
                                            batch_size=self._batch_size, num_workers=self._args.workers,
-                                           pin_memory=(self._args.gpu > 0), sampler=SubsetRandomSampler(
-                                            torch.randint(high=len(train_set), size=(10,))))
+                                           pin_memory=(self._args.gpu > 0), sampler=PySubsetRandomSampler(
+                                            train_set, 10))
             self.val_loader = DataLoader(dataset=val_set,
                                          batch_size=self._batch_size,
                                          shuffle=False, num_workers=self._args.workers,

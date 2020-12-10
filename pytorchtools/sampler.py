@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Sampler
 
 
-class RandomSampler(Sampler):
+class PySubsetRandomSampler(Sampler):
     def __init__(self, data_source, num_samples=2):
         super().__init__(data_source)
         self.data_source = data_source
