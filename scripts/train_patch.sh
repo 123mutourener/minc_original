@@ -3,7 +3,7 @@
 #SBATCH --gres=gpu:2
 #SBATCH --partition=gpu
 #SBATCH --nodes=1
-#SBATCH --time=12:00:00
+#SBATCH --time=60:00:00
 #SBATCH --no-requeue
 #SBATCH --exclusive
 # mail alert at start, end and abortion of execution
