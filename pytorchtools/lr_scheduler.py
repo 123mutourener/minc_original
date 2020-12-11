@@ -6,9 +6,7 @@ class LRScheduler():
     def __init__(self, optimizer, json_data=None, args=None):
         if args is not None:
             self._args = args
-            self._json_data = json_data
-        else:
-            self._lrate_info = json_data
+        self._json_data = json_data
         self._optimizer = optimizer
         self._scheduler = None
 
@@ -43,17 +41,18 @@ class LRScheduler():
         self._json_data["train_params"]["l_rate"] = lrate_dict
 
     def load_scheduler(self):
-        lrate_mode = self._lrate_info["sched"]
-        gamma = self._lrate_info["gamma"]
-        last_epoch = self._lrate_info["last_epoch"]
+        lrate_dict = self._json_data["l_rate"]
+        lrate_mode = lrate_dict["sched"]
+        gamma = lrate_dict["gamma"]
+        last_epoch = self._json_data["last_epoch"]
 
         if lrate_mode != "constant":
             if lrate_mode == "step":
-                step_size = self._lrate_info["step_size"]
+                step_size = self._json_data["step_size"]
                 self._scheduler = lr_scheduler.StepLR(self._optimizer, step_size, gamma,
                                                       last_epoch)
             elif lrate_mode == "multistep":
-                milestones = self._lrate_info["milestones"]
+                milestones = lrate_dict["milestones"]
                 self._scheduler = lr_scheduler.MultiStepLR(self._optimizer, milestones, gamma,
                                                            last_epoch)
             elif lrate_mode == "exponential":

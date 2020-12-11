@@ -40,7 +40,7 @@ def main(args):
     else:
         # Todo: implement load saved models, separate patch and scene.
         # Resume from a training checkpoint or test the network
-        with open(args.resume or args.test, 'rb') as f:
+        with open(args.resume or args.test, 'r') as f:
             json_data = json.load(f)
         train_info = json_data["train_params"]
         torch.manual_seed(json_data["seed"])
@@ -51,10 +51,10 @@ def main(args):
 
         # always check gpu number rather than trust history
         if args.gpu > 0:
-            torch.cuda.manual_seed_all(train_info["seed"])
+            torch.cuda.manual_seed_all(json_data["seed"])
             net.cuda()
         else:
-            torch.manual_seed(train_info["seed"])
+            torch.manual_seed(json_data["seed"])
 
         if args.resume:
             # Resume training
@@ -141,7 +141,7 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
         start_epoch = time()
 
         # Train the Model
-        for phase in ["train", "val"]:
+        for phase in ["train"]:
             batch_time = 0.0
             if phase == "train":
                 # print_interval = 50
