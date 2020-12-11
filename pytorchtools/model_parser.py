@@ -3,6 +3,7 @@ import ast
 import sys
 
 import torch
+from torch import nn
 from torchvision import models
 
 
@@ -54,6 +55,9 @@ class ModelParser():
         net_builder = getattr(models, name)
         if pretrained:
             net = net_builder(pretrained=pretrained, **kwargs)
+            if name == "densenet121":
+                num_ftrs = net.classifier.in_features
+                net.classifier = nn.Linear(num_ftrs, num_classes)
         elif num_classes > 0:
             net = net_builder(pretrained=pretrained, num_classes=num_classes, **kwargs)
         else:
