@@ -141,7 +141,7 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
         start_epoch = time()
 
         # Train the Model
-        for phase in ["train"]:
+        for phase in ["train", "val"]:
             batch_time = 0.0
             if phase == "train":
                 # print_interval = 50
