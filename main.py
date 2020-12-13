@@ -1,7 +1,6 @@
 import json
 import os
 import sys
-import ast
 import torch
 # import visdom
 from torch.autograd import Variable
@@ -179,8 +178,8 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
                 progress_bar(i, len(dataloaders[phase]),
                              "Epoch [{}/{}], {} Loss: {:.4f} Acc: {:.4f}".format(epoch + 1,
                                                                                  epochs[-1] + 1,
-                                                                                 "Train" if phase == "train" \
-                                                                                     else "Validation",
+                                                                                 "Train" if phase == "train"
+                                                                                 else "Validation",
                                                                                  epoch_loss,
                                                                                  epoch_acc))
 
