@@ -27,7 +27,7 @@ def main(args):
         train_info = json_formatter.train_info
         # run the following functions in order!
         # if args.stage == "patch":
-        model_parger = ModelParser(args)
+        model_parger = ModelParser(json_data)
         net = model_parger.prep_model()
         model_optimizer = ModelOptimizer(args, train_info, net)
         optimizer = model_optimizer.prep_optimizer()
@@ -43,18 +43,10 @@ def main(args):
         with open(args.resume or args.test, 'r') as f:
             json_data = json.load(f)
         train_info = json_data["train_params"]
-        torch.manual_seed(json_data["seed"])
 
         # Load the network model
-        model_parser = ModelParser(args)
-        net = model_parser.get_model(json_data["model"], len(json_data["classes"]))
-
-        # always check gpu number rather than trust history
-        if args.gpu > 0:
-            torch.cuda.manual_seed_all(json_data["seed"])
-            net.cuda()
-        else:
-            torch.manual_seed(json_data["seed"])
+        model_parser = ModelParser(json_data)
+        net = model_parser.prep_model()
 
         if args.resume:
             # Resume training
@@ -79,11 +71,7 @@ def main(args):
             # Load the saved parameters
             # (in the same directory as the json file)
             res_dir = os.path.split(args.test)[0]
-            if "params" in json_data:
-                net.load_state_dict(torch.load(os.path.join(res_dir,
-                                                            json_data["params"]
-                                                            )))
-            elif "state" in json_data:
+            if "state" in json_data:
                 # Test a checkpointed network
                 state = torch.load(os.path.join(res_dir, json_data["state"]))
                 net.load_state_dict(state["params"])
@@ -139,9 +127,12 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
     for epoch in epochs:
         # calculate the per batch time cost
         start_epoch = time()
-
+        if args.debug:
+            phases = ["train"]
+        else:
+            phases = ["train", "val"]
         # Train the Model
-        for phase in ["train", "val"]:
+        for phase in phases:
             batch_time = 0.0
             if phase == "train":
                 # print_interval = 50

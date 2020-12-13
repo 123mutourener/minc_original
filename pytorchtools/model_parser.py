@@ -1,5 +1,4 @@
 import argparse
-import ast
 import sys
 
 import torch
@@ -48,8 +47,8 @@ class PrintNetList(argparse.Action):
 
 
 class ModelParser():
-    def __init__(self, args):
-        self._args = args
+    def __init__(self, json_data):
+        self._json_data = json_data
 
     def torchvision_model(self, name, num_classes=-1, pretrained=True, **kwargs):
         net_builder = getattr(models, name)
@@ -72,13 +71,13 @@ class ModelParser():
 
     def prep_model(self):
         # Model and data parameters
-        model = self._args.model
-        classes = ast.literal_eval(self._args.classes)
-        gpu = self._args.gpu
-        seed = self._args.seed
-        stage = self._args.stage
+        model = self._json_data["model"]
+        classes = self._json_data["classes"]
+        gpu = torch.cuda.device_count()
+        seed = self._json_data["seed"]
+        stage = self._json_data["stage"]
 
-        print("Start to train the {} stage".format(stage))
+        print("Start the {} experiment".format(stage))
 
         # Load the network model
         net = self.get_model(model, len(classes))

@@ -20,6 +20,17 @@ class ArgParser:
         return self._args
 
     @staticmethod
+    def _str2bool(v):
+        if isinstance(v, bool):
+            return v
+        if v.lower() in ('yes', 'true', 't', 'y', '1'):
+            return True
+        elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+            return False
+        else:
+            raise argparse.ArgumentTypeError('Boolean value expected.')
+
+    @staticmethod
     def _init_data_args(parser):
         # Data Options
         data_args = parser.add_argument_group('Data arguments')
@@ -75,8 +86,7 @@ class ArgParser:
                                 metavar='NUM', help='pediod of learning rate ' +
                                                     'decay (step, default: 5)')
 
-    @staticmethod
-    def _init_train_args(parser):
+    def _init_train_args(self, parser):
         # Training Options
         train_args = parser.add_argument_group('Training arguments')
         train_args.add_argument('--method', default='SGD', metavar='NAME',
@@ -95,6 +105,8 @@ class ArgParser:
         train_args.add_argument('--seed', type=int, metavar='NUM',
                                 default=179424691,
                                 help='random seed (default: 179424691)')
+        train_args.add_argument('--debug', default=False, const=True, metavar='DEBUG', type=self._str2bool, nargs="?",
+                                help='enable the debug mode (default: False)')
 
     @staticmethod
     def _init_model_args(parser):
@@ -102,7 +114,7 @@ class ArgParser:
         model_args = parser.add_argument_group('Model arguments')
         model_args.add_argument('-m', '--model', metavar='NAME',
                                 default='densenet121', type=str,
-                                help='name of the pre-trained netwrok model to be used')
+                                help='name of the pre-trained network model to be used')
         model_args.add_argument('--classes', metavar='LIST',
                                 default='[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,' +
                                         '16,17,18,19,20,21,22]',
