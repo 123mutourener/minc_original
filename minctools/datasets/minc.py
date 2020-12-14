@@ -1,6 +1,7 @@
 import os
-from PIL import Image
 import torch
+import numpy as np
+from PIL import Image
 from torch.utils.data import Dataset
 from torchvision import transforms
 
@@ -12,9 +13,13 @@ class MINC(Dataset):
         self.set_type = set_type
         self.transform = transform
         self.scale = scale
+        self.classes = classes
         # This value has been obtained from the MINC paper
         self.mean = torch.Tensor([124 / 255., 117 / 255., 104 / 255.])
         self.std = torch.Tensor([1, 1, 1])
+
+        # store the index list for each class image
+        self.class_image_idx = None
 
         # I exploit the fact that several patches are obtained from the
         # same image by saving the last used image and by reusing it
@@ -28,7 +33,7 @@ class MINC(Dataset):
         new_class_id = 0
         with open(file_name, 'r') as f:
             for class_id, class_name in enumerate(f):
-                if class_id in classes:
+                if class_id in self.classes:
                     # The last line char (\n) must be removed
                     self.categories[class_id] = [class_name[:-1], new_class_id]
                     new_class_id += 1
@@ -67,6 +72,10 @@ class MINC(Dataset):
                         self.data.append([self.categories[label][1], path,
                                           patch_center])
 
+            if set_types[i] == "train":
+                self.class_image_idx = self.init_class_index()
+                print("Class index initialised for training set")
+
     def __len__(self):
         return len(self.data)
 
@@ -100,5 +109,13 @@ class MINC(Dataset):
         ])(patch)
 
         label = self.data[idx][0]
-
         return patch, label
+
+    def init_class_index(self):
+        # remember all the index of images for each class label
+        idx_dict = dict()
+        class_list = np.array([row[0] for row in self.data])
+        for class_idx in self.classes:
+            idx_dict[class_idx] = np.argwhere(class_list == class_idx).reshape(-1)
+
+        return idx_dict
