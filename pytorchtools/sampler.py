@@ -1,5 +1,7 @@
 import torch
+import numpy as np
 from torch.utils.data import Sampler
+from tkinter import _flatten
 
 
 class PySubsetRandomSampler(Sampler):
@@ -28,9 +30,11 @@ class PySubsetRandomSampler(Sampler):
         idx_list = []
         for label, label_idx in self._class_image_idx.items():
             n = len(label_idx)
-            idx_list.extend(list(label_idx[torch.randperm(n, dtype=torch.int64)[: per_class_num].tolist()]))
+            idx_list.append(label_idx[torch.randperm(n, dtype=torch.int64)[: per_class_num].tolist()])
+        idx_list = np.array(idx_list)
+        idx_list = idx_list.reshape(-1, order='F')
 
-        return iter(idx_list)
+        return iter(list(idx_list))
 
     def __len__(self):
         return self.num_samples
