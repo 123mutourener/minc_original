@@ -113,7 +113,7 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
     """
     # Training loop
     saver = ModelSaver(args)
-    writer = SummaryWriter(args.save_dir)
+    writer = SummaryWriter(os.path.join(args.save_dir, args.tag))
     print("Training network started!")
     dataloaders = dict()
     dataloaders["train"] = train_loader
@@ -201,19 +201,20 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
         print()
         train_info["train_time"] += round(time() - start_epoch, 3)
 
-        saver.save_state(net, optimizer, json_data, epoch + 1, which="latest")
-        if epoch_acc > best_acc:
+        if epoch_acc >= best_acc:
             best_acc = epoch_acc
             train_info["best_acc"] = best_acc
             train_info["best_epoch"] = epoch + 1
             saver.save_state(net, optimizer, json_data, epoch + 1, which="best")
+
+        saver.save_state(net, optimizer, json_data, epoch + 1, which="latest")
 
     time_elapsed = train_info["train_time"]
     print('Training complete in {:.0f}h {:.0f}m {:.0f}s'.format(time_elapsed // 3600,
                                                                 (time_elapsed % 3600) // 60,
                                                                 time_elapsed % 60))
     print('Best val Acc: {:4f}'.format(best_acc))
-
+    writer.close()
 
 if __name__ == '__main__':
     args = ArgParser().args

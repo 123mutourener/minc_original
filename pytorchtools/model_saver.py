@@ -5,7 +5,9 @@ import torch
 
 class ModelSaver():
     def __init__(self, args):
-        self._chk_dir = args.chk_dir
+        self._chk_dir = os.path.join(args.chk_dir, args.tag)
+        if not os.path.exists(self._chk_dir):
+            os.makedirs(self._chk_dir)
 
     def save_state(self, net, optimizer, json_data, epoch, which="latest"):
         """ Saves the training status.
@@ -21,18 +23,10 @@ class ModelSaver():
         json_data["train_params"]["last_epoch"] = epoch
         # epoch_str = '_epoch_' + str(epoch)
 
-        if epoch == 1:
-            # Generate the UUID (8 characters long)
-            # id = shortuuid.uuid()[:8]
-            id = "EJCtVTG6"
-            json_data["UUID"] = id
-        else:
-            id = json_data["UUID"]
-
         f_name = os.path.join(self._chk_dir, json_data["impl"] + "_" +
                               json_data["model"] + "_" +
                               json_data["dataset"] + "_" +
-                              id + "_" + which)
+                              which)
         # Save training state
         state = dict()
         state["params"] = net.state_dict()

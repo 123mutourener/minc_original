@@ -19,10 +19,11 @@ class JsonFormatter:
         gpu = self._args.gpu
         seed = self._args.seed
         stage = self._args.stage
+        tag = self._args.tag
 
         self._json_data = {"platform": platform.platform(), "date": strftime("%Y-%m-%d_%H:%M:%S"), "impl": "pytorch",
                      "dataset": dataset, "gpu": gpu, "model": model, "classes": classes, "seed": seed,
-                     "stage": stage,
+                     "stage": stage, "tag": tag
                      }
 
     def _format_train(self):
