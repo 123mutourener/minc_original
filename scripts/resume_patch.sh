@@ -1,10 +1,8 @@
 #!/bin/bash
 
-#SBATCH --gres=gpu:4
-#SBATCH --partition=ecsstaff
-#SBATCH --account=ecsstaff
+#SBATCH --gres=gpu:2
+#SBATCH --partition=gpu
 #SBATCH --nodes=1
-#SBATCH --ntasks=1
 #SBATCH --time=60:00:00
 #SBATCH --no-requeue
 #SBATCH --exclusive
