@@ -1,14 +1,15 @@
 #!/bin/bash
 
-#SBATCH --gres=gpu:2
-#SBATCH --partition=gpu
+#SBATCH --gres=gpu:4
+#SBATCH --partition=ecsstaff
+#SBATCH --account=ecsstaff
 #SBATCH --nodes=1
+#SBATCH --ntasks=1
 #SBATCH --time=60:00:00
 #SBATCH --no-requeue
 #SBATCH --exclusive
 # mail alert at start, end and abortion of execution
 #SBATCH --mail-type=ALL
-
 # send mail to this address
 #SBATCH --mail-user=yh1n19@soton.ac.uk
 export STUDENT_ID=$(whoami)
