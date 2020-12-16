@@ -13,6 +13,7 @@ from pytorchtools.lr_scheduler import LRScheduler
 from pytorchtools.json_formatter import JsonFormatter
 from pytorchtools.model_optimizer import ModelOptimizer
 from pytorchtools.model_saver import ModelSaver
+from tensorboardX import SummaryWriter
 from time import time
 
 
@@ -112,6 +113,7 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
     """
     # Training loop
     saver = ModelSaver(args)
+    writer = SummaryWriter(args.save_dir)
     print("Training network started!")
     dataloaders = dict()
     dataloaders["train"] = train_loader
@@ -183,9 +185,18 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
                                                                                  epoch_loss,
                                                                                  epoch_acc))
 
+
+
             # Save the checkpoint state
             if phase == "train":
                 scheduler.step()
+                # save loss and acc
+                writer.add_scalar("train_accuracy", epoch_acc, epoch)
+                writer.add_scalar("train_loss", epoch_loss, epoch)
+
+            else:
+                writer.add_scalar("valid_accuracy", epoch_acc, epoch)
+                writer.add_scalar("valid_loss", epoch_loss, epoch)
 
         print()
         train_info["train_time"] += round(time() - start_epoch, 3)

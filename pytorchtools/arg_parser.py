@@ -1,4 +1,5 @@
 import argparse
+import shortuuid
 from pytorchtools.model_parser import PrintNetList
 from torch.cuda import device_count
 

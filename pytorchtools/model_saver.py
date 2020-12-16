@@ -1,13 +1,11 @@
 import json
 import os
-
-import shortuuid
 import torch
 
 
 class ModelSaver():
     def __init__(self, args):
-        self._save_dir = args.save_dir
+        self._chk_dir = args.chk_dir
 
     def save_state(self, net, optimizer, json_data, epoch, which="latest"):
         """ Saves the training status.
@@ -31,7 +29,7 @@ class ModelSaver():
         else:
             id = json_data["UUID"]
 
-        f_name = os.path.join(self._save_dir, json_data["impl"] + "_" +
+        f_name = os.path.join(self._chk_dir, json_data["impl"] + "_" +
                               json_data["model"] + "_" +
                               json_data["dataset"] + "_" +
                               id + "_" + which)
