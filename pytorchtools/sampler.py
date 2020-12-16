@@ -1,11 +1,10 @@
 import torch
 import numpy as np
 from torch.utils.data import Sampler
-from tkinter import _flatten
-
+from torch.utils.data import Dataset
 
 class PySubsetRandomSampler(Sampler):
-    def __init__(self, data_source, num_samples=2):
+    def __init__(self, data_source: Dataset, num_samples=2):
         super().__init__(data_source)
         self.data_source = data_source
         self._num_samples = num_samples

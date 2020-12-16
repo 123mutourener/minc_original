@@ -25,7 +25,8 @@ class ModelSaver():
 
         if epoch == 1:
             # Generate the UUID (8 characters long)
-            id = shortuuid.uuid()[:8]
+            # id = shortuuid.uuid()[:8]
+            id = "EJCtVTG6"
             json_data["UUID"] = id
         else:
             id = json_data["UUID"]
