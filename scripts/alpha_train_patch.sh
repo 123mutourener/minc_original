@@ -24,4 +24,4 @@ conda activate cv-pytorch
 
 cd ..
 
-python main.py --data-root "${DATA_PATH}" --stage patch --batch-size 128
+python main.py --data-root "${DATA_PATH}" --stage patch --batch-size 256 --tag random_sample_256
