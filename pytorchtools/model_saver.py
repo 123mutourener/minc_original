@@ -35,7 +35,7 @@ class ModelSaver():
 
         # Update train parameters from optimizer state
         for t_param in state["optim"]["param_groups"][0]:
-            if t_param is not "params":
+            if t_param != "params":
                 json_data["train_params"][t_param] = \
                     state["optim"]["param_groups"][0][t_param]
 

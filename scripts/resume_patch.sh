@@ -24,4 +24,4 @@ conda activate cv-pytorch
 
 cd ..
 
-python main.py --data-root "${DATA_PATH}" --stage patch --batch-size 128 --resume ./results/pytorch_densenet121_minc_EJCtVTG6_latest.json
+python main.py --data-root "${DATA_PATH}" --stage patch --batch-size 128 --resume ./checkpoints/ramdom_sampling/pytorch_densenet121_minc_latest.json

@@ -202,6 +202,7 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
         train_info["train_time"] += round(time() - start_epoch, 3)
 
         if epoch_acc >= best_acc:
+            print("update best_acc")
             best_acc = epoch_acc
             train_info["best_acc"] = best_acc
             train_info["best_epoch"] = epoch + 1
