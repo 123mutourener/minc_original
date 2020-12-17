@@ -119,6 +119,7 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
     dataloaders["train"] = train_loader
     dataloaders["val"] = val_loader
     train_info = json_data["train_params"]
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # track the best model
     best_acc = 0.0 if train_info["last_epoch"] == 0 else train_info["best_acc"]
@@ -145,6 +146,7 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
             running_loss = 0.0
             running_corrects = 0
             sample_counter = 0
+            net.to(device)
 
             for i, (images, labels) in enumerate(dataloaders[phase]):
                 start_batch = time()
@@ -155,6 +157,9 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
                 else:
                     images = Variable(images)
                     labels = Variable(labels)
+
+                images.to(device)
+                labels.to(device)
 
                 # Forward + Backward + Optimize
                 optimizer.zero_grad()

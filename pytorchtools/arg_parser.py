@@ -64,7 +64,7 @@ class ArgParser:
         parser.add_argument('--net-list', action=PrintNetList,
                             help='Print the list of the available network ' +
                                  'architectures')
-        parser.add_argument('--tag', default='ramdom_sampling',
+        parser.add_argument('--tag', default='random_sampling',
                             help='The reference name of the experiment')
 
     @staticmethod
