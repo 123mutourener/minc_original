@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:4
 #SBATCH --partition=ecsstaff
 #SBATCH --account=ecsstaff
 #SBATCH --ntasks=1
