@@ -10,28 +10,28 @@ from pytorchtools.progressbar import progress_bar
 from pytorchtools.model_parser import ModelParser
 from pytorchtools.arg_parser import ArgParser
 from pytorchtools.lr_scheduler import LRScheduler
-from pytorchtools.json_formatter import JsonFormatter
 from pytorchtools.model_optimizer import ModelOptimizer
 from pytorchtools.model_saver import ModelSaver
 from tensorboardX import SummaryWriter
 from time import time
 
 
-def main(args):
+def main(arg_parser):
+    args = arg_parser.args
     # Start training from scratch
     if not args.resume and not args.test:
         # Prepare to train the patch CNN.
         # Parse the argements
-        json_formatter = JsonFormatter(args)
-        json_data = json_formatter.json_data
-        train_info = json_formatter.train_info
+        json_data = arg_parser.json_data
+        train_info = arg_parser.train_info
+        lrate_sched_info = arg_parser.lrate_sched_info
         # run the following functions in order!
         # if args.stage == "patch":
         model_parger = ModelParser(json_data)
         net = model_parger.prep_model()
         model_optimizer = ModelOptimizer(args, train_info, net)
         optimizer = model_optimizer.prep_optimizer()
-        scheduler = LRScheduler(optimizer, json_data, args)
+        scheduler = LRScheduler(optimizer, lrate_sched_info)
         scheduler.prep_scheduler()
 
         # Todo: edit the code to load trained patch network if "scene" stage is received
@@ -43,7 +43,7 @@ def main(args):
         with open(args.resume or args.test, 'r') as f:
             json_data = json.load(f)
         train_info = json_data["train_params"]
-
+        lrate_sched_info = train_info["lrate"]
         # Load the network model
         model_parser = ModelParser(json_data)
         net = model_parser.prep_model()
@@ -63,7 +63,7 @@ def main(args):
             optimizer = model_optimizer.load_optimizer(state)
 
             # Load the learning rate scheduler info
-            scheduler = LRScheduler(optimizer, train_info)
+            scheduler = LRScheduler(optimizer, lrate_sched_info)
             scheduler.load_scheduler()
 
         else:
@@ -84,8 +84,8 @@ def main(args):
     test_loader = dataloader.test_loader
 
     if not args.test:
-        epochs = range(train_info["last_epoch"], train_info["epochs"])
-        if args.gpu > 0:
+        epochs = range(lrate_sched_info["last_epoch"], train_info["epochs"])
+        if torch.cuda.is_available():
             criterion = nn.CrossEntropyLoss().cuda()
         else:
             criterion = nn.CrossEntropyLoss()
@@ -122,7 +122,7 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # track the best model
-    best_acc = 0.0 if train_info["last_epoch"] == 0 else train_info["best_acc"]
+    best_acc = 0.0 if train_info["lrate"]["last_epoch"] == 0 else train_info["best_acc"]
     best_loss = -1
     print('-' * 10)
 
@@ -151,7 +151,7 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
             for i, (images, labels) in enumerate(dataloaders[phase]):
                 start_batch = time()
 
-                if args.gpu > 0:
+                if torch.cuda.device_count() > 0:
                     images = Variable(images.cuda(non_blocking=True))
                     labels = Variable(labels.cuda(non_blocking=True))
                 else:
@@ -223,8 +223,8 @@ def train_model(json_data, net, epochs, scheduler, criterion, optimizer, train_l
     writer.close()
 
 if __name__ == '__main__':
-    args = ArgParser().args
+    arg_parser = ArgParser()
+    args = arg_parser.args
     # vis = visdom.Visdom()
-
     if not args.net_list:
-        main(args)
+        main(arg_parser)

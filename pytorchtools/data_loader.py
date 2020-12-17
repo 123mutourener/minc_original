@@ -64,14 +64,16 @@ class TorchDataLoader:
                             classes=self._classes, transform=test_trans)
             print("Test set loaded, with {} samples".format(len(test_set)))
 
+            use_gpu = torch.cuda.is_available()
+
             self.train_loader = DataLoader(dataset=train_set,
                                            batch_size=self._batch_size, num_workers=self._args.workers,
-                                           pin_memory=(self._args.gpu > 0), sampler=PySubsetRandomSampler(
-                                            train_set, 230000))
+                                           pin_memory=use_gpu, sampler=PySubsetRandomSampler(
+                                            train_set, 23))
             self.val_loader = DataLoader(dataset=val_set,
                                          batch_size=self._batch_size,
                                          shuffle=False, num_workers=self._args.workers,
-                                         pin_memory=(self._args.gpu > 0))
+                                         pin_memory=use_gpu)
             self.test_loader = DataLoader(dataset=test_set, batch_size=self._batch_size,
                                           shuffle=False, num_workers=self._args.workers,
-                                          pin_memory=(self._args.gpu > 0))
+                                          pin_memory=use_gpu)

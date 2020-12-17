@@ -74,7 +74,6 @@ class ModelParser():
         model = self._json_data["model"]
         classes = self._json_data["classes"]
         gpu = torch.cuda.device_count()
-        seed = self._json_data["seed"]
         stage = self._json_data["stage"]
 
         print("Start the {} experiment".format(stage))
@@ -94,9 +93,7 @@ class ModelParser():
             net.cuda()
             net = torch.nn.DataParallel(net)
             print("GPU mode enabled with {} chips".format(gpu))
-            torch.cuda.manual_seed_all(seed)
         else:
-            torch.manual_seed(seed)
             print("CPU mode enabled")
 
         return net

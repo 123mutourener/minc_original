@@ -1,5 +1,7 @@
 import argparse
-import shortuuid
+import ast
+import platform
+from time import strftime
 from pytorchtools.model_parser import PrintNetList
 from torch.cuda import device_count
 
@@ -13,8 +15,13 @@ class ArgParser:
         self._init_train_args(parser)
         self._init_lrate_args(parser)
         self._init_control_args(parser)
-
         self._args = parser.parse_args()
+
+        self._json_data = self._format_model()
+        self._train_info = self._format_train()
+        self._lrate_sched_info = self._format_scheduler()
+        self._json_data["train_params"] = self._train_info
+        self._train_info["lrate"] = self._lrate_sched_info
 
     @property
     def args(self):
@@ -74,7 +81,7 @@ class ArgParser:
         lrate_args.add_argument('--l-rate', type=float, default=0.1,
                                 metavar='NUM', help='initial learning Rate' +
                                                     ' (default: 0.1)')
-        lrate_args.add_argument('--lrate-sched', default="multistep",
+        lrate_args.add_argument('--lrate-sched-mode', default="multistep",
                                 metavar="NAME", help="name of the learning " +
                                                      "rate scheduler (default: constant)",
                                 choices=['step', 'multistep', 'exponential',
@@ -94,8 +101,8 @@ class ArgParser:
         train_args = parser.add_argument_group('Training arguments')
         train_args.add_argument('--method', default='SGD', metavar='NAME',
                                 help='training method to be used')
-        train_args.add_argument('--gpu', type=int, default=device_count(), metavar='NUM',
-                                help='number of GPUs to use')
+        # train_args.add_argument('--gpu', type=int, default=device_count(), metavar='NUM',
+        #                         help='number of GPUs to use')
         train_args.add_argument('--epochs', default=20, type=int, metavar='NUM',
                                 help='number of total epochs to run (default: 20)')
         train_args.add_argument('-b', '--batch-size', default=128, type=int,
@@ -105,9 +112,9 @@ class ArgParser:
                                 metavar='NUM', help='Momentum (default: 0.9)')
         train_args.add_argument('--w-decay', type=float, default=1e-4,
                                 metavar='NUM', help='weigth decay (default: 1e-4)')
-        train_args.add_argument('--seed', type=int, metavar='NUM',
-                                default=179424691,
-                                help='random seed (default: 179424691)')
+        # train_args.add_argument('--seed', type=int, metavar='NUM',
+        #                         default=179424691,
+        #                         help='random seed (default: 179424691)')
         train_args.add_argument('--debug', default=False, const=True, metavar='DEBUG', type=self._str2bool, nargs="?",
                                 help='enable the debug mode (default: False)')
 
@@ -123,3 +130,48 @@ class ArgParser:
                                         '16,17,18,19,20,21,22]',
                                 help='indices of the classes to be used for the' +
                                      ' classification')
+
+    def _format_model(self):
+        model = self._args.model
+        dataset = self._args.dataset
+        classes = ast.literal_eval(self._args.classes)
+        stage = self._args.stage
+        tag = self._args.tag
+
+        return {"platform": platform.platform(),
+                "date": strftime("%Y-%m-%d_%H:%M:%S"),
+                "impl": "pytorch",
+                "dataset": dataset,
+                "model": model,
+                "classes": classes,
+                "stage": stage,
+                "tag": tag
+                }
+
+    def _format_train(self):
+
+        return {"method": self._args.method,
+                "epochs": self._args.epochs,
+                "batch_size": self._args.batch_size,
+                "train_time": 0.0
+                }
+
+    def _format_scheduler(self):
+        return {"last_epoch": 0,
+                "gamma": self._args.gamma,
+                "lrate_sched_mode": self._args.lrate_sched_mode,
+                "step_size": self._args.step_size,
+                "milestones": ast.literal_eval(self._args.milestones)
+                }
+
+    @property
+    def json_data(self):
+        return self._json_data
+
+    @property
+    def train_info(self):
+        return self._train_info
+
+    @property
+    def lrate_sched_info(self):
+        return self._lrate_sched_info

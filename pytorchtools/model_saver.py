@@ -20,7 +20,7 @@ class ModelSaver():
         dir -- Directory used to save the data
         """
 
-        json_data["train_params"]["last_epoch"] = epoch
+        json_data["train_params"]["lrate"]["last_epoch"] = epoch
         # epoch_str = '_epoch_' + str(epoch)
 
         f_name = os.path.join(self._chk_dir, json_data["impl"] + "_" +
