@@ -29,7 +29,7 @@ def main(arg_parser):
         # if args.stage == "patch":
         model_parger = ModelParser(json_data)
         net = model_parger.prep_model()
-        model_optimizer = ModelOptimizer(args, train_info, net)
+        model_optimizer = ModelOptimizer(train_info, net)
         optimizer = model_optimizer.prep_optimizer()
         scheduler = LRScheduler(optimizer, lrate_sched_info)
         scheduler.prep_scheduler()
