@@ -59,7 +59,7 @@ def main(arg_parser):
             net.load_state_dict(state["params"])
 
             # load optimizer
-            model_optimizer = ModelOptimizer(args, train_info, net)
+            model_optimizer = ModelOptimizer(train_info, net)
             optimizer = model_optimizer.load_optimizer(state)
 
             # Load the learning rate scheduler info

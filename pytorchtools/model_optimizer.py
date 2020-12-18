@@ -2,18 +2,17 @@ import torch
 
 
 class ModelOptimizer():
-    def __init__(self, args, train_info, net):
-        self._args = args
+    def __init__(self, train_info, net):
         self._train_info = train_info
         self._net = net
         self._optimizer = None
 
     def prep_optimizer(self):
         # Training parameters
-        momentum = self._args.momentum
-        w_decay = self._args.w_decay
-        method = self._args.method
-        l_rate = self._args.l_rate
+        momentum = self._train_info["momentum"]
+        w_decay = self._train_info["w_decay"]
+        method = self._train_info["method"]
+        l_rate = self._train_info["l_rate"]
 
         # Optimization method
         if method == "SGD":

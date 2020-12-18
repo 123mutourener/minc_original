@@ -153,6 +153,9 @@ class ArgParser:
         return {"method": self._args.method,
                 "epochs": self._args.epochs,
                 "batch_size": self._args.batch_size,
+                "momentum": self._args.momentum,
+                "w_decay": self._args.w_decay,
+                "l_rate": self._args.l_rate,
                 "train_time": 0.0
                 }
 

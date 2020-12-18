@@ -22,6 +22,7 @@ class LRScheduler():
                 self._scheduler = lr_scheduler.MultiStepLR(self._optimizer, milestones, gamma)
             elif lrate_mode == "exponential":
                 self._scheduler = lr_scheduler.ExponentialLR(self._optimizer, gamma)
+        return self._scheduler
 
     def load_scheduler(self):
         lrate_mode = self._lrate_sched_info["lrate_sched_mode"]
