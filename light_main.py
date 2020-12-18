@@ -7,6 +7,7 @@ import warnings
 
 
 def main():
+    warnings.filterwarnings('ignore')
     # Start training from scratch
     if not args.resume and not args.test:
         # Parse the argements

@@ -20,8 +20,8 @@ class PatchClassifier(pl.LightningModule):
         self.test_acc = pl.metrics.Accuracy()
 
         self.train_loss = Loss()
-        self.valid_acc = Loss()
-        self.test_acc = Loss()
+        self.valid_loss = Loss()
+        self.test_loss = Loss()
 
     def forward(self, images):
         return self.net(images)
@@ -37,7 +37,7 @@ class PatchClassifier(pl.LightningModule):
         self.train_acc(preds, labels)
         self.train_loss(loss, labels)
         self.log("train_accuracy", self.train_acc, prog_bar=True, on_epoch=True, on_step=True, logger=True)
-        self.log("loss", self.train_loss, prog_bar=True, on_epoch=True, on_step=True, logger=True)
+        self.log("train_loss", self.train_loss, prog_bar=True, on_epoch=True, on_step=True, logger=True)
 
         return loss
 
@@ -48,6 +48,16 @@ class PatchClassifier(pl.LightningModule):
     #     self.log("train_accuracy", self.train_acc, prog_bar=True, on_epoch=True, on_step=True, logger=True)
     #     self.log("loss", self.train_loss, prog_bar=True, on_epoch=True, on_step=True, logger=True)
     #     return outputs["loss"]
+
+    def validation_step(self, batch, batch_idx):
+        images, labels = batch
+        labels_hat = self(images)
+        loss = F.cross_entropy(labels_hat, labels)
+        _, preds = torch.max(labels_hat, 1)
+        self.valid_acc(preds, labels)
+        self.valid_loss(loss, labels)
+        self.log("valid_accuracy", self.valid_acc, prog_bar=True, on_epoch=True, on_step=False, logger=True)
+        self.log("valid_loss", self.valid_loss, prog_bar=True, on_epoch=True, on_step=False, logger=True)
 
     def configure_optimizers(self):
         optimizer = ModelOptimizer(self.json_data["train_params"], self.net).prep_optimizer()
