@@ -1,5 +1,5 @@
 from pytorch_lightning import Trainer
-
+import torch
 from pytorchtools.MINCDataModule import MINCDataModule
 from pytorchtools.arg_parser import ArgParser
 from pytorchtools.patch_classifier import PatchClassifier
@@ -14,12 +14,16 @@ def main():
         json_data = arg_parser.json_data
         model = PatchClassifier(json_data)
         dm = MINCDataModule(args.data_root, json_data)
-        trainer = Trainer(progress_bar_refresh_rate=1, log_every_n_steps=1, flush_logs_every_n_steps=1,
-                          max_epochs=3, replace_sampler_ddp=False)
+        if torch.cuda.device_count() >= 1:
+            trainer = Trainer(progress_bar_refresh_rate=20, log_every_n_steps=20, flush_logs_every_n_steps=800,
+                              max_epochs=args.epochs, replace_sampler_ddp=False)
+        else:
+            trainer = Trainer(progress_bar_refresh_rate=1, log_every_n_steps=1, flush_logs_every_n_steps=1,
+                              max_epochs=3, replace_sampler_ddp=False)
         trainer.fit(model, dm)
 
         # run test set
-        result = trainer.test()
+        trainer.test()
 
 
 if __name__ == '__main__':
