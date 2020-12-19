@@ -56,6 +56,10 @@ class ArgParser:
         data_args.add_argument('--workers', metavar='NUM', type=int,
                                default=0, help='number of worker threads for' +
                                                ' the data loader')
+        data_args.add_argument('--gpus', metavar='NUM', type=int,
+                               default=0, help='number of gpus per node')
+        data_args.add_argument('--num-nodes', metavar='NUM', type=int,
+                               default=0, help='number of nodes')
 
     @staticmethod
     def _init_control_args(parser):

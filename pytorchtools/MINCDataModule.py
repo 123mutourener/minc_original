@@ -1,6 +1,7 @@
 import torch
 from pytorch_lightning import LightningDataModule
-from torch.utils.data import DataLoader, RandomSampler, DistributedSampler
+from torch.utils.data import DataLoader, RandomSampler
+from torch.utils.data.distributed import DistributedSampler
 from torchvision import transforms
 
 from minctools.datasets.minc import MINC
@@ -10,8 +11,6 @@ from pytorchtools.sampler import PySubsetRandomSampler
 
 class MINCDataModule(LightningDataModule):
     def __init__(self, data_root, json_data):
-        super().__init__()
-
         self._use_gpu = torch.cuda.is_available()
         self._data_root = data_root
         self._json_data = json_data

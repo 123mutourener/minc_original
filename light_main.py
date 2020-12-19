@@ -16,7 +16,11 @@ def main():
         dm = MINCDataModule(args.data_root, json_data)
         if torch.cuda.device_count() >= 1:
             trainer = Trainer(progress_bar_refresh_rate=20, log_every_n_steps=20, flush_logs_every_n_steps=800,
-                              max_epochs=args.epochs, replace_sampler_ddp=False)
+                              max_epochs=args.epochs,
+                              gpus=args.gpus,
+                              num_nodes=args.num_nodes,
+                              accelerator='ddp',
+                              replace_sampler_ddp=False)
         else:
             trainer = Trainer(progress_bar_refresh_rate=1, log_every_n_steps=1, flush_logs_every_n_steps=1,
                               max_epochs=3, replace_sampler_ddp=False)
