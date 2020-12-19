@@ -38,7 +38,7 @@ class PatchClassifier(pl.LightningModule):
         self.train_loss(loss, labels)
         self.log("train_accuracy", self.train_acc, prog_bar=True, on_epoch=True, on_step=True, logger=True)
         self.log("train_loss", self.train_loss, prog_bar=True, on_epoch=True, on_step=True, logger=True)
-        print("forward")
+        # print("forward")
         return loss
 
     # def training_step_end(self, outputs):
