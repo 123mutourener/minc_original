@@ -46,7 +46,7 @@ class MINCDataModule(LightningDataModule):
                        classes=self._classes, transform=val_trans)
         print("Validation set loaded, with {} samples".format(len(val_set)))
         # if torch.cuda.device_count() > 1:
-        sampler = DistributedSampler(val_set)
+        sampler = DistributedSampler(val_set, shuffle=False)
         # sampler = RandomSampler(val_set, replacement=True, num_samples=46)
 
         return DataLoader(dataset=val_set, batch_size=self._batch_size,
@@ -63,7 +63,7 @@ class MINCDataModule(LightningDataModule):
                         classes=self._classes, transform=test_trans)
         print("Test set loaded, with {} samples".format(len(test_set)))
         # if torch.cuda.device_count() > 1:
-        sampler = DistributedSampler(test_set)
+        sampler = DistributedSampler(test_set, shuffle=False)
         # sampler = RandomSampler(test_set, replacement=True, num_samples=46)
 
         # else:
