@@ -22,7 +22,7 @@ def progress_bar(current, total, msg=None):
         sys.stdout.write('=')
     sys.stdout.write('>')
     for i in range(rest_len):
-        sys.stdout.write('.')
+        sys.stdout.write('../pytorchtools')
     sys.stdout.write(']')
 
     # Go back to the center of the bar.

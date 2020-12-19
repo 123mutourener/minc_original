@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from minctools.datasets.minc import MINC
-from pytorchtools.sampler import PySubsetRandomSampler
+from archive.sampler import PySubsetRandomSampler
 
 class TorchDataLoader:
     def __init__(self, args, json_data):

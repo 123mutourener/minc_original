@@ -6,9 +6,9 @@ import torch
 from torch.autograd import Variable
 from torch import nn
 from pytorchtools.data_loader import TorchDataLoader
-from pytorchtools.progressbar import progress_bar
+from archive.progressbar import progress_bar
 from pytorchtools.model_parser import ModelParser
-from pytorchtools.arg_parser import ArgParser
+from archive.arg_parser import ArgParser
 from pytorchtools.lr_scheduler import LRScheduler
 from pytorchtools.model_optimizer import ModelOptimizer
 from pytorchtools.model_saver import ModelSaver

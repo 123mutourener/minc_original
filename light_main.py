@@ -1,9 +1,8 @@
 from pytorch_lightning import Trainer
 from pytorch_lightning.utilities.seed import seed_everything
-import torch
 import os
 from pytorchtools.MINCDataModule import MINCDataModule
-from pytorchtools.arg_parser import ArgParser
+from archive.arg_parser import ArgParser
 from pytorchtools.patch_classifier import PatchClassifier
 from pytorchtools.callbacks import valid_acc_callback, valid_loss_callback, last_callback
 from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
