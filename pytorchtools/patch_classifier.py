@@ -49,25 +49,25 @@ class PatchClassifier(pl.LightningModule):
     #     self.log("loss", self.train_loss, prog_bar=True, on_epoch=True, on_step=True, logger=True)
     #     return outputs["loss"]
 
-    def validation_step(self, batch, batch_idx):
-        images, labels = batch
-        labels_hat = self(images)
-        loss = F.cross_entropy(labels_hat, labels)
-        _, preds = torch.max(labels_hat, 1)
-        self.valid_acc(preds, labels)
-        self.valid_loss(loss, labels)
-        self.log("valid_accuracy", self.valid_acc, prog_bar=False, on_epoch=True, on_step=False, logger=True, sync_dist=True)
-        self.log("valid_loss", self.valid_loss, prog_bar=False, on_epoch=True, on_step=False, logger=True, sync_dist=True)
-
-    def test_step(self, batch, batch_idx):
-        images, labels = batch
-        labels_hat = self(images)
-        loss = F.cross_entropy(labels_hat, labels)
-        _, preds = torch.max(labels_hat, 1)
-        self.test_acc(preds, labels)
-        self.test_loss(loss, labels)
-        self.log("test_accuracy", self.test_acc, prog_bar=False, on_epoch=True, on_step=False, logger=True, sync_dist=True)
-        self.log("test_loss", self.test_loss, prog_bar=False, on_epoch=True, on_step=False, logger=True, sync_dist=True)
+    # def validation_step(self, batch, batch_idx):
+    #     images, labels = batch
+    #     labels_hat = self(images)
+    #     loss = F.cross_entropy(labels_hat, labels)
+    #     _, preds = torch.max(labels_hat, 1)
+    #     self.valid_acc(preds, labels)
+    #     self.valid_loss(loss, labels)
+    #     self.log("valid_accuracy", self.valid_acc, prog_bar=False, on_epoch=True, on_step=False, logger=True, sync_dist=True)
+    #     self.log("valid_loss", self.valid_loss, prog_bar=False, on_epoch=True, on_step=False, logger=True, sync_dist=True)
+    #
+    # def test_step(self, batch, batch_idx):
+    #     images, labels = batch
+    #     labels_hat = self(images)
+    #     loss = F.cross_entropy(labels_hat, labels)
+    #     _, preds = torch.max(labels_hat, 1)
+    #     self.test_acc(preds, labels)
+    #     self.test_loss(loss, labels)
+    #     self.log("test_accuracy", self.test_acc, prog_bar=False, on_epoch=True, on_step=False, logger=True, sync_dist=True)
+    #     self.log("test_loss", self.test_loss, prog_bar=False, on_epoch=True, on_step=False, logger=True, sync_dist=True)
 
     def configure_optimizers(self):
         optimizer = ModelOptimizer(self.json_data["train_params"], self.net).prep_optimizer()
