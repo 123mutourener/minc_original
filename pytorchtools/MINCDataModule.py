@@ -6,7 +6,6 @@ from torchvision import transforms
 
 from minctools.datasets.minc import MINC
 from pytorchtools.pl_balanced_distributed_samplier import BalancedDistributedSampler
-from pytorchtools.sampler import PySubsetRandomSampler
 
 
 class MINCDataModule(LightningDataModule):
@@ -18,6 +17,7 @@ class MINCDataModule(LightningDataModule):
         self._dataset = self._json_data["dataset"]
         self._classes = self._json_data["classes"]
         self._batch_size = self._json_data["train_params"]["batch_size"]
+        # self._batch_size = 10
 
     def train_dataloader(self):
         train_trans = transforms.Compose([
@@ -28,11 +28,9 @@ class MINCDataModule(LightningDataModule):
         train_set = MINC(root_dir=self._data_root, set_type='train',
                          classes=self._classes, transform=train_trans)
         print("Training set loaded, with {} samples".format(len(train_set)))
-        # if torch.cuda.device_count() > 1:
         sampler = BalancedDistributedSampler(train_set, 230000)
+        # sampler = BalancedDistributedSampler(train_set, 46)
 
-        # else:
-        #     sampler = PySubsetRandomSampler(train_set, 23)
         return DataLoader(dataset=train_set,
                           batch_size=self._batch_size,
                           pin_memory=self._use_gpu,
@@ -49,9 +47,7 @@ class MINCDataModule(LightningDataModule):
         print("Validation set loaded, with {} samples".format(len(val_set)))
         # if torch.cuda.device_count() > 1:
         sampler = DistributedSampler(val_set)
-
-        # else:
-        #     sampler = RandomSampler(val_set, replacement=True, num_samples=23)
+        # sampler = RandomSampler(val_set, replacement=True, num_samples=46)
 
         return DataLoader(dataset=val_set, batch_size=self._batch_size,
                           shuffle=False, pin_memory=self._use_gpu, sampler=sampler)
@@ -68,6 +64,7 @@ class MINCDataModule(LightningDataModule):
         print("Test set loaded, with {} samples".format(len(test_set)))
         # if torch.cuda.device_count() > 1:
         sampler = DistributedSampler(test_set)
+        # sampler = RandomSampler(test_set, replacement=True, num_samples=46)
 
         # else:
         #     sampler = RandomSampler(test_set, replacement=True, num_samples=23)

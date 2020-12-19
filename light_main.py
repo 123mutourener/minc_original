@@ -4,6 +4,7 @@ import torch
 from pytorchtools.MINCDataModule import MINCDataModule
 from pytorchtools.arg_parser import ArgParser
 from pytorchtools.patch_classifier import PatchClassifier
+from pytorchtools.callbacks import valid_acc_callback, valid_loss_callback
 # import warnings
 
 
@@ -22,12 +23,14 @@ def main():
                               max_epochs=args.epochs,
                               gpus=args.gpus,
                               num_nodes=args.num_nodes,
-                              accelerator='ddp_cpu',
-                              replace_sampler_ddp=False)
+                              accelerator='ddp',
+                              replace_sampler_ddp=False,
+                              callbacks=[valid_acc_callback(), valid_loss_callback()])
         else:
             # for CPU training
             trainer = Trainer(progress_bar_refresh_rate=1, log_every_n_steps=1, flush_logs_every_n_steps=1,
-                              max_epochs=3, replace_sampler_ddp=False, accelerator='ddp_cpu')
+                              max_epochs=3, replace_sampler_ddp=False, accelerator='ddp_cpu', num_processes=2,
+                              callbacks=[valid_acc_callback(), valid_loss_callback()])
         trainer.fit(model, dm)
 
         # run test set
