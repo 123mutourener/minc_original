@@ -7,10 +7,7 @@ import torch.distributed as dist
 import numpy as np
 
 
-T_co = TypeVar('T_co', covariant=True)
-
-
-class BalancedDistributedSampler(Sampler[T_co]):
+class BalancedDistributedSampler(Sampler):
     r"""Sampler that restricts data loading to a subset of the dataset.
 
     It is especially useful in conjunction with
@@ -101,7 +98,7 @@ class BalancedDistributedSampler(Sampler[T_co]):
         # Build balanced subset
         self.per_class_num = self.num_samples // self.num_classes
 
-    def __iter__(self) -> Iterator[T_co]:
+    def __iter__(self):
         idx_list = []
         for label, label_idx in self.class_image_idx.items():
             if self.shuffle:
