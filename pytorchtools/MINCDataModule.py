@@ -11,6 +11,7 @@ from pytorchtools.sampler import PySubsetRandomSampler
 
 class MINCDataModule(LightningDataModule):
     def __init__(self, data_root, json_data):
+        super().__init__()
         self._use_gpu = torch.cuda.is_available()
         self._data_root = data_root
         self._json_data = json_data
@@ -27,13 +28,13 @@ class MINCDataModule(LightningDataModule):
         train_set = MINC(root_dir=self._data_root, set_type='train',
                          classes=self._classes, transform=train_trans)
         print("Training set loaded, with {} samples".format(len(train_set)))
-        if torch.cuda.device_count() > 1:
-            sampler = BalancedDistributedSampler(train_set, 230000)
+        # if torch.cuda.device_count() > 1:
+        sampler = BalancedDistributedSampler(train_set, 230000)
 
-        else:
-            sampler = PySubsetRandomSampler(train_set, 23)
+        # else:
+        #     sampler = PySubsetRandomSampler(train_set, 23)
         return DataLoader(dataset=train_set,
-                          batch_size=10,
+                          batch_size=self._batch_size,
                           pin_memory=self._use_gpu,
                           sampler=sampler)
 
@@ -46,13 +47,13 @@ class MINCDataModule(LightningDataModule):
         val_set = MINC(root_dir=self._data_root, set_type='validate',
                        classes=self._classes, transform=val_trans)
         print("Validation set loaded, with {} samples".format(len(val_set)))
-        if torch.cuda.device_count() > 1:
-            sampler = DistributedSampler(val_set)
+        # if torch.cuda.device_count() > 1:
+        sampler = DistributedSampler(val_set)
 
-        else:
-            sampler = RandomSampler(val_set, replacement=True, num_samples=23)
+        # else:
+        #     sampler = RandomSampler(val_set, replacement=True, num_samples=23)
 
-        return DataLoader(dataset=val_set, batch_size=10,
+        return DataLoader(dataset=val_set, batch_size=self._batch_size,
                           shuffle=False, pin_memory=self._use_gpu, sampler=sampler)
 
     def test_dataloader(self):
@@ -65,10 +66,10 @@ class MINCDataModule(LightningDataModule):
         test_set = MINC(root_dir=self._data_root, set_type='test',
                         classes=self._classes, transform=test_trans)
         print("Test set loaded, with {} samples".format(len(test_set)))
-        if torch.cuda.device_count() > 1:
-            sampler = DistributedSampler(test_set)
+        # if torch.cuda.device_count() > 1:
+        sampler = DistributedSampler(test_set)
 
-        else:
-            sampler = RandomSampler(test_set, replacement=True, num_samples=23)
-        return DataLoader(dataset=test_set, batch_size=10,
+        # else:
+        #     sampler = RandomSampler(test_set, replacement=True, num_samples=23)
+        return DataLoader(dataset=test_set, batch_size=self._batch_size,
                           shuffle=False, pin_memory=self._use_gpu, sampler=sampler)

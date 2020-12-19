@@ -112,7 +112,7 @@ class BalancedDistributedSampler(Sampler[T_co]):
             else:
                 indices = list(range(len(label_idx)))  # type: ignore
 
-            indices = indices[:self.per_class_num]
+            indices = label_idx[indices[:self.per_class_num * self.num_replicas]]
             idx_list.append(indices)
             # if not self.drop_last:
             #     # add extra samples to make it evenly divisible

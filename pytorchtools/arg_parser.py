@@ -116,9 +116,9 @@ class ArgParser:
                                 metavar='NUM', help='Momentum (default: 0.9)')
         train_args.add_argument('--w-decay', type=float, default=1e-4,
                                 metavar='NUM', help='weigth decay (default: 1e-4)')
-        # train_args.add_argument('--seed', type=int, metavar='NUM',
-        #                         default=179424691,
-        #                         help='random seed (default: 179424691)')
+        train_args.add_argument('--seed', type=int, metavar='NUM',
+                                default=179424691,
+                                help='random seed (default: 179424691)')
         train_args.add_argument('--debug', default=False, const=True, metavar='DEBUG', type=self._str2bool, nargs="?",
                                 help='enable the debug mode (default: False)')
 
