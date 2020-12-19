@@ -128,7 +128,7 @@ class BalancedDistributedSampler(Sampler):
         # subsample
         indices = idx_list[self.rank:self.total_size:self.num_replicas]
         assert len(indices) == self.num_samples
-        print("{} sample loaded".format(self.num_samples))
+        # print("{} sample loaded".format(self.num_samples))
         return iter(indices)
 
     def __len__(self) -> int:
