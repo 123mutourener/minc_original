@@ -5,7 +5,7 @@
 #SBATCH --partition=ecsstaff
 #SBATCH --account=ecsstaff
 #SBATCH --nodes=1
-#SBATCH --time=60:00:00
+#SBATCH --time=5:00:00
 # mail alert at start, end and abortion of execution
 #SBATCH --mail-type=ALL
 # send mail to this address
