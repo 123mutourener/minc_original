@@ -49,6 +49,9 @@ def main():
 
     # run test set
     if args.test:
+        # TODO: Write test code in separate file.
+        # TODO: Load one of the the saved checkpoints, then test.
+        # TODO: See https://pytorch-lightning.readthedocs.io/en/latest/trainer.html?highlight=test#test
         trainer.test()
 
 
