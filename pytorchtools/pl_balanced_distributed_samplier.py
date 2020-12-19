@@ -1,5 +1,5 @@
 import math
-from typing import TypeVar, Optional, Iterator
+from typing import TypeVar, Optional, Iterator, Iterable
 
 import torch
 from torch.utils.data import Sampler, Dataset
@@ -98,7 +98,7 @@ class BalancedDistributedSampler(Sampler):
         # Build balanced subset
         self.per_class_num = self.num_samples // self.num_classes
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable:
         idx_list = []
         for label, label_idx in self.class_image_idx.items():
             if self.shuffle:
