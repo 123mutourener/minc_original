@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader, RandomSampler
 from torchvision import transforms
 
 from minctools.datasets.minc import MINC
+from pytorchtools.pl_balanced_distributed_samplier import BalancedDistributedSampler
 from pytorchtools.sampler import PySubsetRandomSampler
 
 
@@ -30,7 +31,7 @@ class MINCDataModule(LightningDataModule):
         return DataLoader(dataset=train_set,
                           batch_size=10,
                           pin_memory=self._use_gpu,
-                          sampler=PySubsetRandomSampler(train_set, 23))
+                          sampler=BalancedDistributedSampler(train_set, 23))
 
     def val_dataloader(self):
         val_trans = transforms.Compose([

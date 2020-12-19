@@ -74,7 +74,7 @@ class MINC(Dataset):
 
             if set_types[i] == "train":
                 self.class_image_idx = self.init_class_index()
-                print("Class index initialised for training set")
+                # print("Class index initialised for training set")
 
     def __len__(self):
         return len(self.data)

@@ -15,7 +15,7 @@ def main():
         model = PatchClassifier(json_data)
         dm = MINCDataModule(args.data_root, json_data)
         trainer = Trainer(progress_bar_refresh_rate=1, log_every_n_steps=1, flush_logs_every_n_steps=1,
-                          max_epochs=args.epochs)
+                          max_epochs=3)
         trainer.fit(model, dm)
 
         # run test set
