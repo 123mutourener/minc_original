@@ -18,6 +18,9 @@ def main():
                           max_epochs=args.epochs)
         trainer.fit(model, dm)
 
+        # run test set
+        result = trainer.test()
+
 
 if __name__ == '__main__':
     arg_parser = ArgParser()

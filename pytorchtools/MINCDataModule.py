@@ -1,6 +1,6 @@
 import torch
 from pytorch_lightning import LightningDataModule
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, RandomSampler
 from torchvision import transforms
 
 from minctools.datasets.minc import MINC
@@ -41,8 +41,8 @@ class MINCDataModule(LightningDataModule):
         val_set = MINC(root_dir=self._data_root, set_type='validate',
                        classes=self._classes, transform=val_trans)
         print("Validation set loaded, with {} samples".format(len(val_set)))
-        return DataLoader(dataset=val_set, batch_size=self._batch_size,
-                          shuffle=False, pin_memory=self._use_gpu)
+        return DataLoader(dataset=val_set, batch_size=10,
+                          shuffle=False, pin_memory=self._use_gpu, sampler=RandomSampler(val_set, replacement=True, num_samples=23))
 
     def test_dataloader(self):
         test_trans = transforms.Compose([
@@ -55,5 +55,5 @@ class MINCDataModule(LightningDataModule):
                         classes=self._classes, transform=test_trans)
         print("Test set loaded, with {} samples".format(len(test_set)))
 
-        return DataLoader(dataset=test_set, batch_size=self._batch_size,
-                          shuffle=False, pin_memory=self._use_gpu)
+        return DataLoader(dataset=test_set, batch_size=10,
+                          shuffle=False, pin_memory=self._use_gpu, sampler=RandomSampler(test_set, replacement=True, num_samples=23))
