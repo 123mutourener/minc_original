@@ -57,13 +57,13 @@ class LitMNIST(pl.LightningModule):
         print(f'Epoch {self.trainer.current_epoch} / Step {self.trainer.global_step}: lr {self.trainer.optimizers[0].param_groups[0]["lr"]}')
         x, y = batch
         opg = self.optimizers()
-        schr = self.trainer.lr_schedulers[0]["scheduler"]
-        schr.step()
+        # schr = self.trainer.lr_schedulers[0]["scheduler"]
+
         logits = self(x)
         loss = F.nll_loss(logits, y)
         self.manual_backward(loss, opg)
         opg.step()
-
+        # schr.step()
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -78,6 +78,13 @@ class LitMNIST(pl.LightningModule):
         self.log('val_acc', acc, prog_bar=True)
         return loss
 
+    def on_validation_epoch_end(self):
+        self.trainer.save_checkpoint("last.ckpt")
+
+    def on_save_checkpoint(self, checkpoint):
+        print("save")
+
+
     def test_step(self, batch, batch_idx):
         # Here we just reuse the validation_step for testing
         return self.validation_step(batch, batch_idx)
@@ -85,7 +92,7 @@ class LitMNIST(pl.LightningModule):
     def configure_optimizers(self):
         # optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         optimizer = torch.optim.SGD(self.parameters(), lr=100)
-        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10], gamma=.1)
+        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[1], gamma=.1)
         return [optimizer], [lr_scheduler]
         # return optimizer
 
@@ -120,5 +127,5 @@ class LitMNIST(pl.LightningModule):
 
 
 model = LitMNIST()
-trainer = pl.Trainer(max_epochs=3, progress_bar_refresh_rate=20, automatic_optimization=False)
+trainer = pl.Trainer(max_epochs=3, progress_bar_refresh_rate=20, automatic_optimization=False, resume_from_checkpoint="last.ckpt")
 trainer.fit(model)
