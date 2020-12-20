@@ -13,7 +13,7 @@ def main():
     # warnings.filterwarnings('ignore')
     # Start training from scratch
     seed_everything(args.seed)
-    logger = TensorBoardLogger("./lightning_logs", name=args.tag)
+    logger = TensorBoardLogger("../lightning_logs", name=args.tag)
 
     # Parse the argements
     json_data = arg_parser.json_data
@@ -22,7 +22,7 @@ def main():
 
     # resume
     if args.resume:
-        resume_path = os.path.join(os.getcwd(), "checkpoints", args.tag, "last", "last.ckpt")
+        resume_path = os.path.join(os.getcwd(), "../checkpoints", args.tag, "last", "last.ckpt")
     else:
         resume_path = None
 

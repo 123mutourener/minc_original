@@ -47,22 +47,18 @@ class LitMNIST(pl.LightningModule):
         x = self.model(x)
         return F.log_softmax(x, dim=1)
 
-    def backward(self, loss, optimizer, optimizer_idx):
-        if self.printauto:
-            print("automatic backward")
-            self.printauto = False
+    def optimizer_backward(self, loss, optimizer, optimizer_idx):
         loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
 
     def training_step(self, batch, batch_idx):
-        print(f'Epoch {self.trainer.current_epoch} / Step {self.trainer.global_step}: lr {self.trainer.optimizers[0].param_groups[0]["lr"]}')
+        # print(f'Epoch {self.trainer.current_epoch} / Step {self.trainer.global_step}: lr {self.trainer.optimizers[0].param_groups[0]["lr"]}')
         x, y = batch
-        opg = self.optimizers()
         # schr = self.trainer.lr_schedulers[0]["scheduler"]
 
         logits = self(x)
         loss = F.nll_loss(logits, y)
-        self.manual_backward(loss, opg)
-        opg.step()
         # schr.step()
         return loss
 
@@ -79,9 +75,22 @@ class LitMNIST(pl.LightningModule):
         return loss
 
     def on_validation_epoch_end(self):
-        self.trainer.save_checkpoint("last.ckpt")
+        self.trainer.save_checkpoint("lasts", weights_only=True)
+
+    def on_load_checkpoint(self, checkpoint):
+        # checkpoint["optimizer_states"][0]["param_groups"][0]["lr"]=1
+        # optimizer = torch.optim.SGD(self.parameters(), lr=1)
+        # checkpoint["optimizer_states"][0] = optimizer.state_dict()
+        # sch = self.trainer.lr_schedulers[0]["scheduler"]
+        # sch.load_state_dict(checkpoint["optimizer_states"][0])
+        # for _ in range(checkpoint["epoch"]):
+        #     self.trainer.lr_schedulers[0]["scheduler"].step()
+        self.optimizers().load_state_dict(checkpoint["optimizer_states"][0])
+        self.trainer.lr_schedulers[0]["scheduler"].load_state_dict(checkpoint["lr_schedulers"][0])
+        print("load")
 
     def on_save_checkpoint(self, checkpoint):
+        # checkpoint.pop("lr_schedulers")
         print("save")
 
 
@@ -92,7 +101,7 @@ class LitMNIST(pl.LightningModule):
     def configure_optimizers(self):
         # optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         optimizer = torch.optim.SGD(self.parameters(), lr=100)
-        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[1], gamma=.1)
+        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[3], gamma=.1)
         return [optimizer], [lr_scheduler]
         # return optimizer
 
@@ -126,6 +135,3 @@ class LitMNIST(pl.LightningModule):
         return DataLoader(self.mnist_test, batch_size=32)
 
 
-model = LitMNIST()
-trainer = pl.Trainer(max_epochs=3, progress_bar_refresh_rate=20, automatic_optimization=False, resume_from_checkpoint="last.ckpt")
-trainer.fit(model)
