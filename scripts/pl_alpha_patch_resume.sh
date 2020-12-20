@@ -4,7 +4,7 @@
 #SBATCH --ntasks-per-node=4
 #SBATCH --partition=ecsstaff
 #SBATCH --account=ecsstaff
-#SBATCH --nodes=2
+#SBATCH --nodes=1
 #SBATCH --time=60:00:00
 # mail alert at start, end and abortion of execution
 #SBATCH --mail-type=ALL
@@ -31,4 +31,4 @@ conda activate cv-pytorch
 
 cd ..
 
-srun python light_main.py --data-root "${DATA_PATH}" --stage patch --batch-size 256 --tag random_sample_256 --gpus 4 --num-nodes 2 --resume True --epochs 20
+srun python light_main.py --data-root "${DATA_PATH}" --stage patch --batch-size 256 --tag random_sample_256 --gpus 4 --num-nodes 1 --resume True --epochs 20
