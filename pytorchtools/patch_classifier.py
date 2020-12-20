@@ -23,6 +23,8 @@ class PatchClassifier(pl.LightningModule):
         self.valid_loss = Loss()
         self.test_loss = Loss()
 
+        self.current_bar = None
+
     def forward(self, images):
         return self.net(images)
 

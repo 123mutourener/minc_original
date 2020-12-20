@@ -72,6 +72,7 @@ class Trainer:
         for epoch in epochs:
             # tqdm progress bar
             train_loop = tqdm(enumerate(train_loader), total=len(train_loader), leave=False)
+            self.model.current_bar = train_loop
             # Train the Model, with both train and validation
             # Switch to train mode
             self.model.train()
@@ -88,6 +89,7 @@ class Trainer:
 
             # tqdm progress bar
             eval_loop = tqdm(enumerate(valid_loader), total=len(valid_loader), leave=False)
+            self.model.current_bar = eval_loop
             # evaluate the network
             self.model.eval()
             with torch.no_grad():
