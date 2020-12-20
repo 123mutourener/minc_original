@@ -28,8 +28,8 @@ class MINCDataModule(LightningDataModule):
         train_set = MINC(root_dir=self._data_root, set_type='train',
                          classes=self._classes, transform=train_trans)
         print("Training set loaded, with {} samples".format(len(train_set)))
-        sampler = BalancedDistributedSampler(train_set, 46)
         # sampler = BalancedDistributedSampler(train_set, 46)
+        sampler = BalancedDistributedSampler(train_set, 230000)
 
         return DataLoader(dataset=train_set,
                           batch_size=self._batch_size,
@@ -45,9 +45,8 @@ class MINCDataModule(LightningDataModule):
         val_set = MINC(root_dir=self._data_root, set_type='validate',
                        classes=self._classes, transform=val_trans)
         print("Validation set loaded, with {} samples".format(len(val_set)))
-        # if torch.cuda.device_count() > 1:
-        # sampler = DistributedSampler(val_set, shuffle=False)
-        sampler = RandomSampler(val_set, replacement=True, num_samples=46)
+        sampler = DistributedSampler(val_set, shuffle=False)
+        # sampler = RandomSampler(val_set, replacement=True, num_samples=46)
 
         return DataLoader(dataset=val_set, batch_size=self._batch_size,
                           shuffle=False, pin_memory=self._use_gpu, sampler=sampler)
@@ -63,10 +62,7 @@ class MINCDataModule(LightningDataModule):
                         classes=self._classes, transform=test_trans)
         print("Test set loaded, with {} samples".format(len(test_set)))
         # if torch.cuda.device_count() > 1:
-        # sampler = DistributedSampler(test_set, shuffle=False)
-        sampler = RandomSampler(test_set, replacement=True, num_samples=46)
-
-        # else:
-        #     sampler = RandomSampler(test_set, replacement=True, num_samples=23)
+        sampler = DistributedSampler(test_set, shuffle=False)
+        # sampler = RandomSampler(test_set, replacement=True, num_samples=46)
         return DataLoader(dataset=test_set, batch_size=self._batch_size,
                           shuffle=False, pin_memory=self._use_gpu, sampler=sampler)

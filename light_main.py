@@ -39,7 +39,7 @@ def main():
     else:
         # for CPU training
         trainer = Trainer(progress_bar_refresh_rate=1, log_every_n_steps=1, flush_logs_every_n_steps=1,
-                          max_epochs=3, replace_sampler_ddp=False, accelerator='ddp_cpu', num_processes=2,
+                          max_epochs=args.epochs, replace_sampler_ddp=False, accelerator='ddp_cpu', num_processes=2,
                           callbacks=[valid_acc_callback(args.tag), valid_loss_callback(args.tag), last_callback(args.tag)],
                           logger=logger, resume_from_checkpoint=resume_path)
 

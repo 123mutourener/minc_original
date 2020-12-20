@@ -31,4 +31,4 @@ conda activate cv-pytorch
 
 cd ..
 
-srun python light_main.py --data-root "${DATA_PATH}" --stage patch --batch-size 256 --tag random_sample_256 --gpus 4 --num-nodes 1 --epochs 10
+srun python light_main.py --data-root "${DATA_PATH}" --stage patch --batch-size 256 --tag random_sample_256 --gpus 4 --num-nodes 1 --resume True --epochs 20
