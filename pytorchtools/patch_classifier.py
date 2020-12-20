@@ -37,11 +37,11 @@ class PatchClassifier(pl.LightningModule):
         images, labels = batch
         labels_hat = self(images)
         loss = F.cross_entropy(labels_hat, labels)
-        # _, preds = torch.max(labels_hat, 1)
-        # self.train_acc(preds, labels)
-        # self.train_loss(loss, labels)
-        # self.log("train_accuracy", self.train_acc, prog_bar=True, on_epoch=True, on_step=True, logger=True)
-        # self.log("train_loss", self.train_loss, prog_bar=True, on_epoch=True, on_step=True, logger=True)
+        _, preds = torch.max(labels_hat, 1)
+        self.train_acc(preds, labels)
+        self.train_loss(loss, labels)
+        self.log("train_accuracy", self.train_acc, prog_bar=True, on_epoch=True, on_step=True, logger=True)
+        self.log("train_loss", self.train_loss, prog_bar=True, on_epoch=True, on_step=True, logger=True)
         # # print("forward")
         return loss
 
@@ -70,8 +70,6 @@ class PatchClassifier(pl.LightningModule):
         scheduler = LRScheduler(optimizer, self.json_data["train_params"]["lrate"]).prep_scheduler()
         return [optimizer], [scheduler]
 
-    # def log(self, name, value, prog_bar, on_epoch, on_step, logger, sync_dist=True):
-    #     tqdm.set_description(train_loop.set_description(f"Epoch [{epoch}/{self.max_epochs}]"))
-    #     if on_step:
-
+    def log(self, name, value, prog_bar, on_epoch, on_step, logger, sync_dist=True):
+        self.current_bar.set_description(f"Epoch [{self.trainer.current_epoch}/{self.trainer.max_epochs}]")
 

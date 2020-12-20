@@ -43,6 +43,8 @@ class LitMNIST(pl.LightningModule):
             nn.Linear(hidden_size, self.num_classes)
         )
 
+        self.prog_bar_dict = dict()
+
     def forward(self, x):
         x = self.model(x)
         return F.log_softmax(x, dim=1)
@@ -60,6 +62,7 @@ class LitMNIST(pl.LightningModule):
         logits = self(x)
         loss = F.nll_loss(logits, y)
         # schr.step()
+        self.log("train_loss", loss.item(), prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -100,7 +103,7 @@ class LitMNIST(pl.LightningModule):
 
     def configure_optimizers(self):
         # optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        optimizer = torch.optim.SGD(self.parameters(), lr=100)
+        optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate)
         lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[3], gamma=.1)
         return [optimizer], [lr_scheduler]
         # return optimizer
@@ -134,4 +137,17 @@ class LitMNIST(pl.LightningModule):
     def test_dataloader(self):
         return DataLoader(self.mnist_test, batch_size=32)
 
+    def log(self, name=None, value=None, prog_bar=False, on_epoch=True, on_step=False, logger=True, sync_dist=True):
+        if prog_bar:
+            self.prog_bar_dict[name] = value
 
+    def on_train_batch_end(self):
+        self.update_prog_bar()
+
+    def on_validation_batch_end(self):
+        self.update_prog_bar()
+
+    def update_prog_bar(self):
+        self.current_bar.set_description(f"Epoch [{self.trainer.current_epoch}/{self.trainer.max_epochs}]")
+        self.current_bar.set_postfix(self.prog_bar_dict)
+        # self.prog_bar_dict = dict()

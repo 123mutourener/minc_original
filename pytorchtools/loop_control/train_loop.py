@@ -4,6 +4,7 @@ import torch
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
 
+
 class Trainer:
     def __init__(self,
                  progress_bar_refresh_rate=20,
@@ -64,14 +65,15 @@ class Trainer:
     def train(self):
         # print("Training network started!")
         # print("-"*10)
-        epochs = range(self.current_epoch, self.max_epochs+1)
+        epochs = range(self.current_epoch, self.max_epochs + 1)
 
         train_loader = self.data_module.train_dataloader()
         valid_loader = self.data_module.val_dataloader()
 
         for epoch in epochs:
+            self.current_epoch = epoch
             # tqdm progress bar
-            train_loop = tqdm(enumerate(train_loader), total=len(train_loader), leave=False)
+            train_loop = tqdm(enumerate(train_loader), total=len(train_loader), leave=False, miniters=len(train_loader)//self.progress_bar_refresh_rate)
             self.model.current_bar = train_loop
             # Train the Model, with both train and validation
             # Switch to train mode
@@ -84,14 +86,16 @@ class Trainer:
                 for idx, optimizer in enumerate(self.optimizers):
                     self.model.optimizer_backward(loss=loss, optimizer=optimizer, optimizer_idx=idx)
 
-                train_loop.set_description(f"Epoch [{epoch}/{self.max_epochs}]")
                 self.global_step += 1
-
+                self.model.on_train_batch_end()
             # tqdm progress bar
-            eval_loop = tqdm(enumerate(valid_loader), total=len(valid_loader), leave=False)
+            eval_loop = tqdm(enumerate(valid_loader), total=len(valid_loader), leave=False, miniters=len(valid_loader)//self.progress_bar_refresh_rate)
             self.model.current_bar = eval_loop
             # evaluate the network
             self.model.eval()
             with torch.no_grad():
                 for batch_idx, batch in eval_loop:
                     self.model.validation_step(batch=batch, batch_idx=batch_idx)
+                    self.model.on_validation_batch_end()
+
+            self.last_epoch = epoch
