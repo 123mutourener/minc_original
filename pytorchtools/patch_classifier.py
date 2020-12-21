@@ -26,9 +26,6 @@ class PatchClassifier(pl.LightningModule):
     def forward(self, images):
         return self.net(images)
 
-    def backward(self, loss, optimizer, optimizer_idx):
-        loss.backward()
-
     def training_step(self, batch, batch_idx):
         images, labels = batch
         labels_hat = self(images)
@@ -72,6 +69,8 @@ class PatchClassifier(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = ModelOptimizer(self.json_data["train_params"], self.net).prep_optimizer()
         scheduler = LRScheduler(optimizer, self.json_data["train_params"]["lrate"]).prep_scheduler()
+        for _ in range(self.trainer.current_epoch):
+            scheduler.step()
         return [optimizer], [scheduler]
 
     def get_progress_bar_dict(self):

@@ -1,3 +1,4 @@
+import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.utilities.seed import seed_everything
 import os
@@ -20,12 +21,6 @@ def main():
     model = PatchClassifier(json_data)
     dm = MINCDataModule(args.data_root, json_data)
 
-    # resume
-    if args.resume:
-        resume_path = os.path.join(os.getcwd(), "checkpoints", args.tag, "last", "last.ckpt")
-    else:
-        resume_path = None
-
     # for HPC training
     if not args.debug:
         trainer = Trainer(progress_bar_refresh_rate=20, log_every_n_steps=20, flush_logs_every_n_steps=800,
@@ -35,13 +30,21 @@ def main():
                           accelerator='ddp',
                           replace_sampler_ddp=False,
                           callbacks=[valid_acc_callback(args.tag), valid_loss_callback(args.tag), last_callback(args.tag)],
-                          logger=logger, resume_from_checkpoint=resume_path)
+                          logger=logger)
     else:
         # for CPU training
         trainer = Trainer(progress_bar_refresh_rate=1, log_every_n_steps=1, flush_logs_every_n_steps=1,
                           max_epochs=args.epochs, replace_sampler_ddp=False, accelerator='ddp_cpu', num_processes=2,
                           callbacks=[valid_acc_callback(args.tag), valid_loss_callback(args.tag), last_callback(args.tag)],
-                          logger=logger, resume_from_checkpoint=resume_path)
+                          logger=logger)
+
+    # resume
+    if args.resume:
+        resume_path = os.path.join(os.getcwd(), "checkpoints", args.tag, "last", "last.ckpt")
+        checkpoint = torch.load(resume_path)
+        model.load_state_dict(checkpoint["state_dict"])
+        trainer.global_step = checkpoint["global_step"]
+        trainer.current_epoch = checkpoint["epoch"]
 
     if not args.test:
         trainer.fit(model, dm)

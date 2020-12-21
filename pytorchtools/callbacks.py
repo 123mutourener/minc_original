@@ -28,4 +28,5 @@ def last_callback(tag):
     return ModelCheckpoint(
         save_last=True,
         dirpath=os.path.join(os.getcwd(), folder, tag, "last"),
+        filename= "{epoch:02d}"
     )
