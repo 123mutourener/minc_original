@@ -27,6 +27,7 @@ def valid_acc_callback(tag):
 def last_callback(tag):
     return ModelCheckpoint(
         save_last=True,
+        save_top_k=-1,
         dirpath=os.path.join(os.getcwd(), folder, tag, "last"),
         filename= "{epoch:02d}"
     )

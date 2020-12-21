@@ -47,7 +47,7 @@ class LitMNIST(pl.LightningModule):
         return F.log_softmax(x, dim=1)
 
     def training_step(self, batch, batch_idx):
-        print(f'Epoch {self.trainer.current_epoch} / Step {self.trainer.global_step}: lr {self.trainer.optimizers[0].param_groups[0]["lr"]}')
+        # print(f'Epoch {self.trainer.current_epoch} / Step {self.trainer.global_step}: lr {self.trainer.optimizers[0].param_groups[0]["lr"]}')
         x, y = batch
         logits = self(x)
         loss = F.nll_loss(logits, y)
@@ -64,9 +64,6 @@ class LitMNIST(pl.LightningModule):
         self.log('val_loss', loss, prog_bar=True)
         self.log('val_acc', acc, prog_bar=True)
         return loss
-
-    def on_validation_epoch_end(self):
-        self.trainer.save_checkpoint("./checkpoints/{}.ckpt".format(self.trainer.current_epoch), weights_only=True)
 
     def test_step(self, batch, batch_idx):
         # Here we just reuse the validation_step for testing
@@ -111,9 +108,11 @@ class LitMNIST(pl.LightningModule):
 
 
 model = LitMNIST()
+tag = "mnist_test"
+from pytorchtools.callbacks import valid_loss_callback, valid_acc_callback, last_callback
 # checkpoint = torch.load("./checkpoints/4.ckpt")
 # model.load_state_dict(checkpoint["state_dict"])
-trainer = pl.Trainer(max_epochs=10, progress_bar_refresh_rate=20)
+trainer = pl.Trainer(max_epochs=10, progress_bar_refresh_rate=20, callbacks=[last_callback(tag)])
 # trainer.global_step = checkpoint["global_step"]
 # trainer.current_epoch = checkpoint["epoch"]
 trainer.fit(model)
