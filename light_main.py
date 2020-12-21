@@ -40,7 +40,7 @@ def main():
 
     # resume
     if args.resume:
-        resume_path = os.path.join(os.getcwd(), "checkpoints", args.tag, "last", "last.ckpt")
+        resume_path = os.path.join(os.getcwd(), "checkpoints", args.tag, args.resume)
         checkpoint = torch.load(resume_path)
         model.load_state_dict(checkpoint["state_dict"])
         trainer.global_step = checkpoint["global_step"]
