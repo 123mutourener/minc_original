@@ -87,8 +87,8 @@ class LitMNIST(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        # optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate)
-        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[3], gamma=.1)
+        # optimizer = torch.optim.SGD(self.parameters(), lr=100)
+        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[2], gamma=.1)
         return [optimizer], [lr_scheduler]
         # return optimizer
 
@@ -140,6 +140,9 @@ class LitMNIST(pl.LightningModule):
 
     def on_train_epoch_end(self):
         pass
+
+    def scheduler_step(self, scheduler, scheduler_idx):
+        scheduler.step()
 
     def on_epoch_end(self, callbacks):
         for callback in callbacks:

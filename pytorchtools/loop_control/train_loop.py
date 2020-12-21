@@ -94,7 +94,8 @@ class Trainer:
                 self.global_step += 1
                 self.model.on_train_batch_end()
             self.model.on_train_epoch_end()
-
+            for idx, scheduler in enumerate(self.schedulers):
+                self.model.scheduler_step(scheduler=scheduler, scheduler_idx=idx)
             # tqdm progress bar
             eval_loop = tqdm(enumerate(valid_loader), total=len(valid_loader), leave=False,
                              miniters=len(valid_loader) // self.progress_bar_refresh_rate)
@@ -116,10 +117,10 @@ class Trainer:
 
     def save_checkpoint(self, dirpath, filename: str, mode, value, save_top_k):
         path = os.path.join(os.getcwd(), dirpath)
-        filename = filename.format(self.last_epoch, value) + ".tar"
+        filename = filename.format(self.last_epoch, value) + ".ckpt"
         if not os.path.exists(path):
             os.makedirs(path)
-        existing_files = [os.path.join(path, item) for item in os.listdir(path) if ".tar" in item]
+        existing_files = [os.path.join(path, item) for item in os.listdir(path) if ".ckpt" in item]
         if len(existing_files) >= save_top_k:
             oldest_file = min(existing_files, key=os.path.getctime)
             os.remove(oldest_file)

@@ -9,5 +9,8 @@ valid_acc_callback = valid_acc_callback(tag=tag)
 last_callback = last_callback(tag=tag)
 
 model = LitMNIST()
-trainer = Trainer(max_epochs=3, progress_bar_refresh_rate=20, callbacks=[valid_loss_callback, valid_acc_callback, last_callback], resume_from_checkpoint="./checkpoints/"+tag+"/accuracy/minc-epoch=01-valid_accuracy=0.37.tar")
+trainer = Trainer(max_epochs=3, progress_bar_refresh_rate=20, callbacks=[valid_loss_callback, valid_acc_callback, last_callback],
+                  # resume_from_checkpoint="./checkpoints/"+tag+"/accuracy/minc-epoch=01-valid_accuracy=-0.48.ckpt",
+                  resume_from_checkpoint=None
+                  )
 trainer.fit(model)
