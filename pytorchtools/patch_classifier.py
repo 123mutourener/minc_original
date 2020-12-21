@@ -24,6 +24,7 @@ class PatchClassifier(pl.LightningModule):
         self.test_loss = Loss()
 
         self.current_bar = None
+        self.prog_bar_dict = dict()
 
     def forward(self, images):
         return self.net(images)
@@ -70,6 +71,19 @@ class PatchClassifier(pl.LightningModule):
         scheduler = LRScheduler(optimizer, self.json_data["train_params"]["lrate"]).prep_scheduler()
         return [optimizer], [scheduler]
 
-    def log(self, name, value, prog_bar, on_epoch, on_step, logger, sync_dist=True):
-        self.current_bar.set_description(f"Epoch [{self.trainer.current_epoch}/{self.trainer.max_epochs}]")
+    def log(self, name=None, value=None, prog_bar=False, on_epoch=True, on_step=False, logger=True, sync_dist=True):
+        if logger:
+            self.logger.add_scalar(name, value, self.trainer.global_step)
+        if prog_bar:
+            self.prog_bar_dict[name] = value
 
+    def on_train_batch_end(self):
+        self.update_prog_bar()
+
+    def on_validation_batch_end(self):
+        self.update_prog_bar()
+
+    def update_prog_bar(self):
+        self.current_bar.set_description(f"Epoch [{self.trainer.current_epoch}/{self.trainer.max_epochs}]")
+        self.current_bar.set_postfix(self.prog_bar_dict)
+        # self.prog_bar_dict = dict()

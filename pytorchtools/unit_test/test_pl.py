@@ -8,7 +8,6 @@ from torchvision.datasets import MNIST
 from torchvision import transforms
 import pytorch_lightning as pl
 from pytorch_lightning.metrics.functional import accuracy
-from pytorchtools.callbacks import valid_loss_callback, valid_acc_callback, last_callback
 
 
 class LitMNIST(pl.LightningModule):
@@ -16,7 +15,7 @@ class LitMNIST(pl.LightningModule):
     def __init__(self, data_dir='./', hidden_size=64, learning_rate=2e-4):
 
         super().__init__()
-        self.printauto = True
+
         # Set our init args as class attributes
         self.data_dir = data_dir
         self.hidden_size = hidden_size
@@ -43,26 +42,14 @@ class LitMNIST(pl.LightningModule):
             nn.Linear(hidden_size, self.num_classes)
         )
 
-        self.prog_bar_dict = dict()
-
     def forward(self, x):
         x = self.model(x)
         return F.log_softmax(x, dim=1)
 
-    def optimizer_backward(self, loss, optimizer, optimizer_idx):
-        loss.backward()
-        optimizer.step()
-        optimizer.zero_grad()
-
     def training_step(self, batch, batch_idx):
-        # print(f'Epoch {self.trainer.current_epoch} / Step {self.trainer.global_step}: lr {self.trainer.optimizers[0].param_groups[0]["lr"]}')
         x, y = batch
-        # schr = self.trainer.lr_schedulers[0]["scheduler"]
-
         logits = self(x)
         loss = F.nll_loss(logits, y)
-        # schr.step()
-        self.log("train_loss", loss.item(), prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -73,13 +60,9 @@ class LitMNIST(pl.LightningModule):
         acc = accuracy(preds, y)
 
         # Calling self.log will surface up scalars for you in TensorBoard
-        # self.log('val_loss', loss, prog_bar=True)
-        # self.log('val_acc', acc, prog_bar=True)
+        self.log('val_loss', loss, prog_bar=True)
+        self.log('val_acc', acc, prog_bar=True)
         return loss
-
-    def on_validation_epoch_end(self):
-        self.log("valid_loss", torch.randn(1).item())
-        self.log("valid_accuracy", torch.randn(1).item())
 
     def test_step(self, batch, batch_idx):
         # Here we just reuse the validation_step for testing
@@ -87,10 +70,7 @@ class LitMNIST(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        # optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate)
-        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[3], gamma=.1)
-        return [optimizer], [lr_scheduler]
-        # return optimizer
+        return optimizer
 
     ####################
     # DATA RELATED HOOKS
@@ -121,30 +101,6 @@ class LitMNIST(pl.LightningModule):
     def test_dataloader(self):
         return DataLoader(self.mnist_test, batch_size=32)
 
-    def log(self, name=None, value=None, prog_bar=True, logger=True, sync_dist=True):
-        if logger:
-            self.logger.add_scalar(name, value, self.trainer.global_step)
-        if prog_bar:
-            self.prog_bar_dict[name] = value
-
-    def on_train_batch_end(self):
-        self.update_prog_bar()
-
-    def on_validation_batch_end(self):
-        self.update_prog_bar()
-
-    def update_prog_bar(self):
-        self.current_bar.set_description(f"Epoch [{self.trainer.current_epoch}/{self.trainer.max_epochs}]")
-        self.current_bar.set_postfix(self.prog_bar_dict)
-        # self.prog_bar_dict = dict()
-
-    def on_train_epoch_end(self):
-        pass
-
-    def on_epoch_end(self, callbacks):
-        for callback in callbacks:
-            monitor = callback.get_monitor()
-            if monitor is None:
-                callback.update()
-            else:
-                callback.update(value=self.prog_bar_dict[monitor])
+model = LitMNIST()
+trainer = pl.Trainer(max_epochs=3, progress_bar_refresh_rate=20)
+trainer.fit(model)
