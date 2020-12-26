@@ -4,4 +4,5 @@ The original paper, Material Recognition in the Wild with the Materials in Conte
 
 Check:
 https://github.com/dulucas/Material_Segmentation_PyTorch
+
 https://github.com/paulrox/pytorch-minc-dataset
